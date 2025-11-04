@@ -25701,8 +25701,8 @@ async function main(argc, argv) {
         });
     }
     await prepareEnvironmentVars();
-    //await buildAndPushDockerImage();
-    await executeSshCommands();
+    await buildAndPushDockerImage();
+    //await executeSshCommands();
 }
 async function prepareEnvironmentVars() {
     const environmentOutput = getInput("environment-output", "boolean");
@@ -25830,16 +25830,14 @@ async function executeSshCommands() {
     const sshPort = getInput("ssh-port", "string", environmentVars["SSH_PORT"] ?? process.env.SSH_PORT ?? "");
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
-    const sshProcess = (0, child_process_1.spawn)('ssh', ["-o", "StrictHostKeyChecking=no", "-T", "-p", sshPort, `${sshUsername}@${sshHost}`]);
-    sshProcess.stdin.write(`${sshPassword}`);
-    sshProcess.stdin.write(`${sshPassword}\n`);
-    sshProcess.stdin.write(`${sshPassword}`);
+    const sshProcess = (0, child_process_1.spawn)('ssh', ["-o", "StrictHostKeyChecking=no", "-p", sshPort, `${sshUsername}@${sshHost}`]);
     sshProcess.stdout.on('data', (data) => {
-        print("log!", `${data}`);
+        print("log", `${data}`);
         if (`${data}`.includes("key fingerprint")) {
             sshProcess.stdin.write(`yes\n`);
         }
         else if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
+            print("log", "here we go -- welp ", sshPassword);
             sshProcess.stdin.write(`${sshPassword}\n`);
             return;
         }
@@ -25848,13 +25846,10 @@ async function executeSshCommands() {
         print("error", `${data}`);
         if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
             print("log", "here we go ", sshPassword);
-            sshProcess.stdin.write(`${sshPassword}\n`);
-            return;
+            sshProcess.stdin.write(`${sshPassword}`);
+            sshProcess.stdin.end();
         }
     });
-    sshProcess.stdin.write(`${sshPassword}`);
-    sshProcess.stdin.write(`${sshPassword}\n`);
-    sshProcess.stdin.write(`${sshPassword}`);
     sshProcess.on('close', (code) => {
         if (code === 0)
             return;
@@ -25865,7 +25860,7 @@ async function executeSshCommands() {
     if (getInput("dokku-deploy", "boolean")) {
         //sshProcess.stdin.write(`dokku apps:list;`);
     }
-    sshProcess.stdin.end();
+    //sshProcess.stdin.end();
 }
 function executeInstruction(value, instruction) {
     if (instruction === "UPPER")
