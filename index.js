@@ -25697,7 +25697,6 @@ async function main(argc, argv) {
     await buildAndPushDockerImage();
 }
 async function prepareEnvironmentVars() {
-    var _a, _b, _c;
     const environment = getInput("environment");
     if (!environment)
         return;
@@ -25709,13 +25708,12 @@ async function prepareEnvironmentVars() {
     }
     const verbose = getInput("verbose");
     const environmentVarsRaw = getInput("environment-vars", "array");
-    const environmentCasing = ((_a = getInput("environment-casing")) !== null && _a !== void 0 ? _a : "").toUpperCase();
-    const environmentVarsReadPrefixRaw = (_b = getInput("environment-vars-read-prefix")) !== null && _b !== void 0 ? _b : "";
-    const environmentVarsWritePrefixRaw = (_c = getInput("environment-vars-write-prefix")) !== null && _c !== void 0 ? _c : "";
+    const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
+    const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
+    const environmentVarsWritePrefixRaw = getInput("environment-vars-write-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVarsWritePrefix = executeInstruction(expandVariables(environmentVarsWritePrefixRaw), environmentCasing);
     const environmentVars = environmentVarsRaw.reduce((acc, key) => {
-        var _a;
         let instruction = "";
         if (key.includes("|")) {
             const [_key, _instruction] = key.split("|");
@@ -25723,7 +25721,7 @@ async function prepareEnvironmentVars() {
             instruction = _instruction;
         }
         key = expandVariables(key);
-        acc[key] = executeInstruction((_a = process.env[environmentVarsReadPrefix + key]) !== null && _a !== void 0 ? _a : "", instruction);
+        acc[key] = executeInstruction(process.env[environmentVarsReadPrefix + key] ?? "", instruction);
         return acc;
     }, {});
     if (verbose !== undefined) {
@@ -25748,17 +25746,15 @@ async function prepareEnvironmentVars() {
     core.setOutput("env-setup-completed", true);
 }
 async function buildAndPushDockerImage() {
-    var _a, _b;
     const dockerize = getInput("dockerize", "boolean");
     if (!dockerize)
         return;
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
-    const environmentCasing = ((_a = getInput("environment-casing")) !== null && _a !== void 0 ? _a : "").toUpperCase();
+    const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsRaw = getInput("docker-write-env-vars", "array");
-    const environmentVarsReadPrefixRaw = (_b = getInput("environment-vars-read-prefix")) !== null && _b !== void 0 ? _b : "";
+    const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVars = environmentVarsRaw.reduce((acc, key) => {
-        var _a;
         let instruction = "";
         if (key.includes("|")) {
             const [_key, _instruction] = key.split("|");
@@ -25766,8 +25762,8 @@ async function buildAndPushDockerImage() {
             instruction = _instruction;
         }
         key = expandVariables(key);
-        console.log("BEFORE YEAH --- ", key);
-        acc[key] = executeInstruction((_a = process.env[environmentVarsReadPrefix + key]) !== null && _a !== void 0 ? _a : "", instruction);
+        console.log("BEFORE YEAH --- ", key, process.env[environmentVarsReadPrefix + key]);
+        acc[key] = executeInstruction(process.env[environmentVarsReadPrefix + key] ?? "", instruction);
         console.log("AFTER YEAH --- ", key, acc[key]);
         return acc;
     }, {});
@@ -25801,9 +25797,9 @@ function executeInstruction(value, instruction) {
     else if (instruction === "base64")
         return Buffer.from(value, "utf8").toString("base64");
     else if (instruction === "sanitize")
-        return Buffer.from(value.replace("\n", "<=-=>").replace("\r", ""), "utf8").toString("base64").replace("\n", "<=-=>");
+        return Buffer.from(value.replace("\n", "<=-=>").replaceAll("\r", ""), "utf8").toString("base64").replaceAll("\n", "<=-=>");
     else if (instruction === "desanitize")
-        return Buffer.from(value.replace("<=-=>", "\n"), "base64").toString("utf8").replace("<=-=>", "\n");
+        return Buffer.from(value.replaceAll("<=-=>", "\n"), "base64").toString("utf8").replaceAll("<=-=>", "\n");
     return value;
 }
 function expandVariables(value) {
