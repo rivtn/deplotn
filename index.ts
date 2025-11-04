@@ -14,17 +14,18 @@ async function main(argc: number, argv: string[]) {
         setupTest(argc, argv);
     }
     verbose = !!getInput("verbose");
-    await prepareEnvironmentVars();
-    await buildAndPushDockerImage();
-}
-
-async function prepareEnvironmentVars() {
     if (process.env.REPO_VARS) {
         let parsed = JSON.parse(process.env.REPO_VARS);
         Object.keys(parsed).forEach((k) => {
             process.env[k] = parsed[k];
         })
     }
+    await prepareEnvironmentVars();
+    await buildAndPushDockerImage();
+    await execiuteSshCommands();
+}
+
+async function prepareEnvironmentVars() {
     const environmentOutput = getInput("environment-output", "boolean");
     if (!environmentOutput) return;
     const verbose = getInput("verbose");
@@ -69,8 +70,7 @@ async function prepareEnvironmentVars() {
 }
 
 async function buildAndPushDockerImage() {
-    const dockerize = getInput("dockerize", "boolean");
-    if (!dockerize) return;
+    if (!getInput("dockerize", "boolean")) return;
     const environment = getInput("environment", "string", "main");
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
     const appName = getInput("app-name", "string", process.env.APP_NAME ?? "");
@@ -122,6 +122,35 @@ async function buildAndPushDockerImage() {
     dockerShellProcess.stdin.write(`docker tag ${appName} ${dockerRegistryHost}/${environment}/${appName};`);
     dockerShellProcess.stdin.write(`docker push ${dockerRegistryHost}/${environment}/${appName};`);
     dockerShellProcess.stdin.end();
+}
+
+async function execiuteSshCommands() {
+    print("log", `Connecting to SSH server...`);
+    const sshHost = getInput("ssh-host", "string", process.env.SSH_HOST ?? "");
+    const sshPort = getInput("ssh-port", "string", process.env.SSH_PORT ?? "");
+    const sshUsername = getInput("ssh-username", "string", process.env.SSH_USERNAME ?? "");
+    const sshProcess = spawn('ssh', ["-p", sshPort, `${sshUsername}@${sshHost}`]);
+    sshProcess.stdout.on('data', (data) => {
+        print("log!", `${data}`);
+        if (`${data}`.includes("key fingerprint")) {
+            sshProcess.stdin.write(`yes\n`);
+        } else if (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost)) {
+            sshProcess.stdin.write(`yes\n`);
+            return;
+        }
+    });
+    sshProcess.stderr.on('data', (data) => {
+        print("error", `${data}`);
+    });
+    sshProcess.on('close', (code) => {
+        if (code === 0) return;
+        print("log", `SSH:Shell:: closed with code - ${code}`);
+    });
+    //sshProcess.stdin.write(`dokku apps:list;`);
+    if (getInput("dokku-deploy", "boolean")) {
+        //sshProcess.stdin.write(`dokku apps:list;`);
+    }
+    sshProcess.stdin.end();
 }
 
 function executeInstruction(value: string, instruction: string) {

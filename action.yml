@@ -62,6 +62,23 @@ inputs:
     required: false
     default: |
         DOKKU_CONFIGS
+  # ssh setup
+  ssh-host: 
+    description: "The SSH server host"
+    required: false
+  ssh-port: 
+    description: "The SSH server port"
+    required: false
+  ssh-username: 
+    description: "The SSH server username"
+    required: false
+  ssh-password: 
+    description: "The SSH server password"
+    required: false
+  dokku-deploy: 
+    description: "Flag to indicate if to deploy to vm using dokku"
+    required: false
+    default: false
 
 outputs:
   env-setup-completed:
