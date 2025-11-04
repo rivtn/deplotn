@@ -152,7 +152,7 @@ async function executeSshCommands() {
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
 
     const sshProcess = spawn('ssh', ["-o", "StrictHostKeyChecking=no", "-T", "-p", sshPort, `${sshUsername}@${sshHost}`]);
-    sshProcess.stdin.write(`${sshPassword};\n`);
+    sshProcess.stdin.write(`${sshPassword}\n`);
     sshProcess.stdout.on('data', (data) => {
         print("log!", `${data}`);
         if (`${data}`.includes("key fingerprint")) {
@@ -166,7 +166,7 @@ async function executeSshCommands() {
         print("error", `${data}`);
         if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
             print("log", "here we go ", sshPassword);
-            sshProcess.stdin.write(`${sshPassword};\n`);
+            sshProcess.stdin.write(`${sshPassword}\n`);
             return;
         }
     });
