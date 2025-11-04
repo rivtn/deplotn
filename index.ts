@@ -19,8 +19,8 @@ async function main(argc: number, argv: string[]) {
 }
 
 async function prepareEnvironmentVars() {
-    const environment = getInput("environment");
-    if (!environment) return;
+    const environmentOutput = getInput("environment-output", "boolean");
+    if (!environmentOutput) return;
     if (process.env.REPO_VARS) {
         let parsed = JSON.parse(process.env.REPO_VARS);
         Object.keys(parsed).forEach((k) => {
@@ -28,6 +28,7 @@ async function prepareEnvironmentVars() {
         })
     }
     const verbose = getInput("verbose");
+    const environment = getInput("environment", "string", "main");
     const environmentVarsRaw = getInput("environment-vars", "array") as string[];
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";

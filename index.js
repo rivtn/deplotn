@@ -25698,8 +25698,8 @@ async function main(argc, argv) {
     await buildAndPushDockerImage();
 }
 async function prepareEnvironmentVars() {
-    const environment = getInput("environment");
-    if (!environment)
+    const environmentOutput = getInput("environment-output", "boolean");
+    if (!environmentOutput)
         return;
     if (process.env.REPO_VARS) {
         let parsed = JSON.parse(process.env.REPO_VARS);
@@ -25708,6 +25708,7 @@ async function prepareEnvironmentVars() {
         });
     }
     const verbose = getInput("verbose");
+    const environment = getInput("environment", "string", "main");
     const environmentVarsRaw = getInput("environment-vars", "array");
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
