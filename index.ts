@@ -79,7 +79,7 @@ async function buildAndPushDockerImage() {
     const environmentVarsRaw = getInput("docker-write-env-vars", "array") as string[];
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const dockerRegistryHost = getInput("docker-registry-host", "string", process.env.REGISTRY_HOST ?? "");
-    const dockerRegistryUsername= getInput("docker-registry-username", "string", process.env.REGISTRY_USERNAME ?? "");
+    const dockerRegistryUsername = getInput("docker-registry-username", "string", process.env.REGISTRY_USERNAME ?? "");
     const dockerRegistryPassword = getInput("docker-registry-password", "string", process.env.REGISTRY_PASSWORD ?? "");
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVars = environmentVarsRaw.reduce((acc: any, key: string) => {
@@ -116,6 +116,7 @@ async function buildAndPushDockerImage() {
     dockerShellProcess.on('close', (code) => {
         if (code === 0) return;
         print("log", `Docker:Shell:: closed with code - ${code}`);
+        core.setFailed(`${code}`);
     });
     dockerShellProcess.stdin.write(`echo '${dockerRegistryPassword}' | docker login -u ${dockerRegistryUsername} --password-stdin ${dockerRegistryHost};`);
     dockerShellProcess.stdin.write(`docker buildx build -f ${dockerfile} --platform=linux/amd64 -t ${appName} .;`);
@@ -126,16 +127,36 @@ async function buildAndPushDockerImage() {
 
 async function executeSshCommands() {
     print("log", `Connecting to SSH server...`);
-    const sshHost = getInput("ssh-host", "string", process.env.SSH_HOST ?? "");
-    const sshPort = getInput("ssh-port", "string", process.env.SSH_PORT ?? "");
-    const sshUsername = getInput("ssh-username", "string", process.env.SSH_USERNAME ?? "");
+    const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
+    const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
+    const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
+    const environmentVars = ["SSH_HOST", "SSH_PORT", "SSH_USERNAME"].reduce((acc: any, key: string) => {
+        let instruction = "";
+        if (key.includes("|")) {
+            const [_key, _instruction] = key.split("|");
+            key = _key;
+            instruction = _instruction;
+        }
+        key = expandVariables(key);
+        if (key in __ENVIRONMENT_VARS) {
+            acc[key] = executeInstruction(__ENVIRONMENT_VARS[key], instruction);
+        } else {
+            acc[key] = process.env[environmentVarsReadPrefix + key];
+        }
+        return acc;
+    }, {});
+    print("log", "SSH Variables", environmentVars);
+    const sshHost = getInput("ssh-host", "string", environmentVars["SSH_HOST"] ?? process.env.SSH_HOST ?? "");
+    const sshPort = getInput("ssh-port", "string", environmentVars["SSH_PORT"] ?? process.env.SSH_PORT ?? "");
+    const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
+
     const sshProcess = spawn('ssh', ["-p", sshPort, `${sshUsername}@${sshHost}`]);
     sshProcess.stdout.on('data', (data) => {
         print("log!", `${data}`);
         if (`${data}`.includes("key fingerprint")) {
             sshProcess.stdin.write(`yes\n`);
         } else if (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost)) {
-            sshProcess.stdin.write(`yes\n`);
+            sshProcess.stdin.write(`dfdhfghggf\n`);
             return;
         }
     });
@@ -145,6 +166,7 @@ async function executeSshCommands() {
     sshProcess.on('close', (code) => {
         if (code === 0) return;
         print("log", `SSH:Shell:: closed with code - ${code}`);
+        core.setFailed(`${code}`);
     });
     //sshProcess.stdin.write(`dokku apps:list;`);
     if (getInput("dokku-deploy", "boolean")) {
