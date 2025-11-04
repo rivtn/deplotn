@@ -72,9 +72,9 @@ async function buildAndPushDockerImage() {
     if (!dockerize) return;
     const environment = getInput("environment", "string", "main");
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
+    const dockerProjectEnvPath = getInput("docker-project-env-path", "string", "");
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsRaw = getInput("docker-write-env-vars", "array") as string[];
-    const dockerProjectEnvPath = getInput("dockerfile", "docker-project-env-path", "");
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVars = environmentVarsRaw.reduce((acc: any, key: string) => {
@@ -114,7 +114,7 @@ async function buildAndPushDockerImage() {
     });
     dockerShellProcess.stdin.write(`cat .env;`);
     dockerShellProcess.stdin.write(`echo '${process.env.REGISTRY_PASSWORD}' | docker login -u ${process.env.REGISTRY_USERNAME} --password-stdin ${process.env.REGISTRY_HOST};`);
-    dockerShellProcess.stdin.write(`docker buildx build --platform=linux/amd64 -t ${process.env.APP_NAME} .;`);
+    dockerShellProcess.stdin.write(`docker buildx build -f ${dockerfile} --platform=linux/amd64 -t ${process.env.APP_NAME} .;`);
     dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
     dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
     dockerShellProcess.stdin.end();
