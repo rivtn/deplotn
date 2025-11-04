@@ -82,7 +82,7 @@ async function buildAndPushDockerImage() {
             instruction = _instruction;
         }
         key = expandVariables(key);
-        console.log("BEFORE YEAH --- ", key);
+        console.log("BEFORE YEAH --- ", key, process.env[environmentVarsReadPrefix + key]);
         acc[key] = executeInstruction(process.env[environmentVarsReadPrefix + key] ?? "", instruction);
         console.log("AFTER YEAH --- ", key, acc[key]);
         return acc;
