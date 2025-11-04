@@ -46,10 +46,14 @@ inputs:
     required: false
   docker-registry-username: 
     description: "Docker registry username"
-    required: true
+    required: false
   docker-registry-password: 
     description: "Docker registry password"
-    required: true
+    required: false
+  docker-project-env-path: 
+    description: "The project .env path"
+    default: ".env"
+    required: false
   docker-write-env-vars: 
     description: "The variables to put in the .env file in the Dockerfile project root"
     default: |

@@ -25682,6 +25682,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const fs = __importStar(__nccwpck_require__(9896));
 const process = __importStar(__nccwpck_require__(932));
 const core = __importStar(__nccwpck_require__(7484));
 const child_process_1 = __nccwpck_require__(5317);
@@ -25753,6 +25754,7 @@ async function buildAndPushDockerImage() {
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsRaw = getInput("docker-write-env-vars", "array");
+    const dockerProjectEnvPath = getInput("dockerfile", "docker-project-env-path", "");
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVars = environmentVarsRaw.reduce((acc, key) => {
@@ -25771,11 +25773,13 @@ async function buildAndPushDockerImage() {
         }
         return acc;
     }, {});
-    if (verbose) {
-        console.log("THE.000", process.env);
-        console.log("THe envirnment variables --- ", environmentVars);
-        print("log", `echo "Preparing to build the image...";`);
+    print("log", ".env Environment variables", environmentVars);
+    if (Object.keys(environmentVars).length && dockerProjectEnvPath) {
+        Object.keys(environmentVars).forEach((k) => {
+            fs.writeFileSync(dockerProjectEnvPath, environmentVars[k]);
+        });
     }
+    print("log", `Preparing to build the image...`);
     const dockerShellProcess = (0, child_process_1.spawn)('sh');
     dockerShellProcess.stdout.on('data', (data) => {
         print("log", `${data}`);
@@ -25788,10 +25792,11 @@ async function buildAndPushDockerImage() {
             return;
         print("log", `Docker:Shell:: closed with code - ${code}`);
     });
+    dockerShellProcess.stdin.write(`cat .env;`);
     dockerShellProcess.stdin.write(`echo '${process.env.REGISTRY_PASSWORD}' | docker login -u ${process.env.REGISTRY_USERNAME} --password-stdin ${process.env.REGISTRY_HOST};`);
     dockerShellProcess.stdin.write(`docker buildx build --platform=linux/amd64 -t ${process.env.APP_NAME} .;`);
-    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
     dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
+    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
     dockerShellProcess.stdin.end();
 }
 function executeInstruction(value, instruction) {
