@@ -25701,8 +25701,8 @@ async function main(argc, argv) {
         });
     }
     await prepareEnvironmentVars();
-    await buildAndPushDockerImage();
-    await execiuteSshCommands();
+    //await buildAndPushDockerImage();
+    await executeSshCommands();
 }
 async function prepareEnvironmentVars() {
     const environmentOutput = getInput("environment-output", "boolean");
@@ -25803,7 +25803,7 @@ async function buildAndPushDockerImage() {
     dockerShellProcess.stdin.write(`docker push ${dockerRegistryHost}/${environment}/${appName};`);
     dockerShellProcess.stdin.end();
 }
-async function execiuteSshCommands() {
+async function executeSshCommands() {
     print("log", `Connecting to SSH server...`);
     const sshHost = getInput("ssh-host", "string", process.env.SSH_HOST ?? "");
     const sshPort = getInput("ssh-port", "string", process.env.SSH_PORT ?? "");
