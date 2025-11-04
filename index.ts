@@ -162,8 +162,9 @@ async function executeSshCommands() {
         }
     });
     sshProcess.stderr.on('data', (data) => {
-        print("error", `${data}`);
+        print("error", `---> ${data}`);
         if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
+            print("log", "here we go ", sshPassword);
             sshProcess.stdin.write(`${sshPassword}`);
             return;
         }
