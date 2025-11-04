@@ -89,6 +89,7 @@ async function buildAndPushDockerImage() {
     }, {});
 
     if (verbose) {
+        console.log("THE.000", process.env);
         console.log("THe envirnment variables --- ", environmentVars);
         print("log", `echo "Preparing to build the image...";`);
     }
