@@ -25697,13 +25697,9 @@ async function prepareEnvironmentVars() {
     if (!environment)
         return;
     if (process.env.REPO_VARS) {
-        console.log("REPO_VARS 1", typeof process.env.REPO_VARS, process.env.REPO_VARS);
         let parsed = JSON.parse(process.env.REPO_VARS);
-        console.log("REPO_VARS 2", typeof parsed, parsed);
-        console.log("REPO_VARS 3", typeof parsed, Object.keys(parsed));
         Object.keys(parsed).forEach((k) => {
-            var _a;
-            process.env[k] = ((_a = process.env.REPO_VARS) !== null && _a !== void 0 ? _a : {})[k];
+            process.env[k] = parsed[k];
         });
     }
     const verbose = getInput("verbose");
