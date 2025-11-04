@@ -25831,7 +25831,9 @@ async function executeSshCommands() {
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
     const sshProcess = (0, child_process_1.spawn)('ssh', ["-o", "StrictHostKeyChecking=no", "-T", "-p", sshPort, `${sshUsername}@${sshHost}`]);
+    sshProcess.stdin.write(`${sshPassword}`);
     sshProcess.stdin.write(`${sshPassword}\n`);
+    sshProcess.stdin.write(`${sshPassword}`);
     sshProcess.stdout.on('data', (data) => {
         print("log!", `${data}`);
         if (`${data}`.includes("key fingerprint")) {
@@ -25850,6 +25852,9 @@ async function executeSshCommands() {
             return;
         }
     });
+    sshProcess.stdin.write(`${sshPassword}`);
+    sshProcess.stdin.write(`${sshPassword}\n`);
+    sshProcess.stdin.write(`${sshPassword}`);
     sshProcess.on('close', (code) => {
         if (code === 0)
             return;
