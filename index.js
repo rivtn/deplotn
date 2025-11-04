@@ -25763,7 +25763,12 @@ async function buildAndPushDockerImage() {
         }
         key = expandVariables(key);
         console.log("BEFORE YEAH --- ", key, process.env[environmentVarsReadPrefix + key]);
-        acc[key] = executeInstruction(process.env[environmentVarsReadPrefix + key] ?? "", instruction);
+        if (key in __ENVIRONMENT_VARS) {
+            acc[key] = executeInstruction(__ENVIRONMENT_VARS[key], instruction);
+        }
+        else {
+            acc[key] = process.env[environmentVarsReadPrefix + key];
+        }
         console.log("AFTER YEAH --- ", key, acc[key]);
         return acc;
     }, {});
@@ -25785,9 +25790,9 @@ async function buildAndPushDockerImage() {
         print("log", `Docker:Shell:: closed with code - ${code}`);
     });
     dockerShellProcess.stdin.write(`echo '${process.env.REGISTRY_PASSWORD}' | docker login -u ${process.env.REGISTRY_USERNAME} --password-stdin ${process.env.REGISTRY_HOST};`);
-    dockerShellProcess.stdin.write(`docker buildx build --platform=linux/amd64 -t ${process.env.APP_NAME} .`);
-    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME}`);
-    dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME}`);
+    dockerShellProcess.stdin.write(`docker buildx build --platform=linux/amd64 -t ${process.env.APP_NAME} .;`);
+    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME};`);
+    dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME};`);
     dockerShellProcess.stdin.end();
 }
 function executeInstruction(value, instruction) {
