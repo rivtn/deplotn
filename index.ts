@@ -21,8 +21,8 @@ async function main(argc: number, argv: string[]) {
         })
     }
     await prepareEnvironmentVars();
-    //await buildAndPushDockerImage();
-    await executeSshCommands();
+    await buildAndPushDockerImage();
+    //await executeSshCommands();
 }
 
 async function prepareEnvironmentVars() {
