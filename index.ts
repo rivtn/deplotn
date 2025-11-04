@@ -69,6 +69,7 @@ async function prepareEnvironmentVars() {
 async function buildAndPushDockerImage() {
     const dockerize = getInput("dockerize", "boolean");
     if (!dockerize) return;
+    const environment = getInput("environment", "string", "main");
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsRaw = getInput("docker-write-env-vars", "array") as string[];
@@ -82,13 +83,11 @@ async function buildAndPushDockerImage() {
             instruction = _instruction;
         }
         key = expandVariables(key);
-        console.log("BEFORE YEAH --- ", key, process.env[environmentVarsReadPrefix + key]);
         if (key in __ENVIRONMENT_VARS) {
             acc[key] = executeInstruction(__ENVIRONMENT_VARS[key], instruction);
         } else {
             acc[key] = process.env[environmentVarsReadPrefix + key];
         }
-        console.log("AFTER YEAH --- ", key, acc[key]);
         return acc;
     }, {});
 
@@ -111,8 +110,8 @@ async function buildAndPushDockerImage() {
     });
     dockerShellProcess.stdin.write(`echo '${process.env.REGISTRY_PASSWORD}' | docker login -u ${process.env.REGISTRY_USERNAME} --password-stdin ${process.env.REGISTRY_HOST};`);
     dockerShellProcess.stdin.write(`docker buildx build --platform=linux/amd64 -t ${process.env.APP_NAME} .;`);
-    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME};`);
-    dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME};`);
+    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
+    dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
     dockerShellProcess.stdin.end();
 }
 
