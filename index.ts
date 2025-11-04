@@ -157,7 +157,7 @@ async function executeSshCommands() {
         if (`${data}`.includes("key fingerprint")) {
             sshProcess.stdin.write(`yes\n`);
         } else if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
-            sshProcess.stdin.write(`${sshPassword}`);
+            sshProcess.stdin.write(`${sshPassword};`);
             return;
         }
     });
@@ -165,7 +165,7 @@ async function executeSshCommands() {
         print("error", `---> ${data}`);
         if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
             print("log", "here we go ", sshPassword);
-            sshProcess.stdin.write(`${sshPassword}`);
+            sshProcess.stdin.write(`${sshPassword};`);
             return;
         }
     });
