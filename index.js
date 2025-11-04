@@ -25782,7 +25782,7 @@ async function buildAndPushDockerImage() {
     print("log", `Preparing to build the image...`);
     const dockerShellProcess = (0, child_process_1.spawn)('sh');
     dockerShellProcess.stdout.on('data', (data) => {
-        print("log", `${data}`);
+        print("log!", `${data}`);
     });
     dockerShellProcess.stderr.on('data', (data) => {
         print("error", `${data}`);
@@ -25856,6 +25856,10 @@ function print(action = "log", ...content) {
     }
     if (!verbose)
         return;
+    if (action === "log!") {
+        process.stdout.write(content.join(" "));
+        return;
+    }
     console[action](...content);
 }
 function setupTest(argc, argv) {

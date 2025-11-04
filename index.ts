@@ -103,7 +103,7 @@ async function buildAndPushDockerImage() {
     print("log", `Preparing to build the image...`);
     const dockerShellProcess = spawn('sh');
     dockerShellProcess.stdout.on('data', (data) => {
-        print("log", `${data}`);
+        print("log!", `${data}`);
     });
     dockerShellProcess.stderr.on('data', (data) => {
         print("error", `${data}`);
@@ -165,11 +165,15 @@ function getInput(name: string, type: string = "string", defaultValue?: any) {
     return value;
 }
 
-function print(action: "log" | "error" = "log", ...content: string[]) {
+function print(action: "log" | "log!" | "error" = "log", ...content: string[]) {
     if (verbose === undefined) {
         verbose = !!getInput("verbose");
     }
     if (!verbose) return;
+    if (action === "log!") {
+        process.stdout.write(content.join(" "));
+        return;
+    }
     console[action](...content);
 }
 
