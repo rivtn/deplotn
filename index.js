@@ -25836,8 +25836,8 @@ async function executeSshCommands() {
         if (`${data}`.includes("key fingerprint")) {
             sshProcess.stdin.write(`yes\n`);
         }
-        else if (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost)) {
-            sshProcess.stdin.write(`${sshPassword}\n`);
+        else if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
+            sshProcess.stdin.write(`${sshPassword}`);
             return;
         }
     });
