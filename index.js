@@ -25837,15 +25837,15 @@ async function executeSshCommands() {
             sshProcess.stdin.write(`yes\n`);
         }
         else if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
-            sshProcess.stdin.write(`${sshPassword};`);
+            sshProcess.stdin.write(`${sshPassword}\n`);
             return;
         }
     });
     sshProcess.stderr.on('data', (data) => {
-        print("error", `---> ${data}`);
+        print("error", `${data}`);
         if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
             print("log", "here we go ", sshPassword);
-            sshProcess.stdin.write(`${sshPassword};`);
+            sshProcess.stdin.write(`${sshPassword};\n`);
             return;
         }
     });
