@@ -151,7 +151,7 @@ async function executeSshCommands() {
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
 
-    const sshProcess = spawn('ssh', ["-o", "StrictHostKeyChecking=no", "-T", "-p", sshPort, `${sshUsername}@${sshHost}`]);
+    const sshProcess = spawn('ssh', ["-o", "StrictHostKeyChecking=no", "-t", "-p", sshPort, `${sshUsername}@${sshHost}`]);
     sshProcess.stdout.on('data', (data) => {
         print("log", `${data}`);
         if (`${data}`.includes("key fingerprint")) {
