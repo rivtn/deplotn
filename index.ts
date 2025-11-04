@@ -20,7 +20,7 @@ async function prepareEnvironmentVars() {
         let parsed = JSON.parse(process.env.REPO_VARS);
         console.log("REPO_VARS 2", typeof parsed, parsed);
         console.log("REPO_VARS 3", typeof parsed, Object.keys(parsed));
-        Object.keys(process.env.REPO_VARS as any).forEach((k) => {
+        Object.keys(parsed).forEach((k) => {
             process.env[k] = ((process.env.REPO_VARS as any) ?? {})[k];
         })
     }
