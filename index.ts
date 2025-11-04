@@ -16,8 +16,9 @@ async function prepareEnvironmentVars() {
     const environment = getInput("environment");
     if (!environment) return;
     if (process.env.REPO_VARS) {
+        process.env.REPO_VARS = JSON.parse(process.env.REPO_VARS);
         console.log("REPO_VARS 1", typeof process.env.REPO_VARS, process.env.REPO_VARS);
-        console.log("REPO_VARS 2", typeof JSON.parse(process.env.REPO_VARS), JSON.parse(process.env.REPO_VARS));
+        console.log("REPO_VARS 2", typeof process.env.REPO_VARS, process.env.REPO_VARS);
         Object.keys(process.env.REPO_VARS as any).forEach((k) => {
             process.env[k] = ((process.env.REPO_VARS as any) ?? {})[k];
         })
