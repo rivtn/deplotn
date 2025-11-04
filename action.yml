@@ -20,7 +20,7 @@ inputs:
     description: "The list of variables to process and output for subsequent actions"
     required: true
     default: |
-        DOKKU_CONFIGS|base64
+        DOKKU_CONFIGS|sanitize
   environment-vars-read-prefix:
     description: "The prefix for the environment variable when reading from inputs if available, e.g. UAT_, ${environment}_"
     required: false
