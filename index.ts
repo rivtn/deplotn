@@ -130,7 +130,7 @@ async function executeSshCommands() {
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
-    const environmentVars = ["SSH_HOST", "SSH_PORT", "SSH_USERNAME"].reduce((acc: any, key: string) => {
+    const environmentVars = ["SSH_HOST", "SSH_PORT", "SSH_USERNAME", "SSH_PASSWORD"].reduce((acc: any, key: string) => {
         let instruction = "";
         if (key.includes("|")) {
             const [_key, _instruction] = key.split("|");
@@ -149,9 +149,9 @@ async function executeSshCommands() {
     const sshHost = getInput("ssh-host", "string", environmentVars["SSH_HOST"] ?? process.env.SSH_HOST ?? "");
     const sshPort = getInput("ssh-port", "string", environmentVars["SSH_PORT"] ?? process.env.SSH_PORT ?? "");
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
-    const sshPassword = getInput("ssh-username", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
+    const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
 
-    const sshProcess = spawn('ssh', ["-tt", "-p", sshPort, `${sshUsername}@${sshHost}`]);
+    const sshProcess = spawn('ssh', ["-T", "-p", sshPort, `${sshUsername}@${sshHost}`]);
     sshProcess.stdout.on('data', (data) => {
         print("log!", `${data}`);
         if (`${data}`.includes("key fingerprint")) {
