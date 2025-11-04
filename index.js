@@ -25720,7 +25720,7 @@ async function prepareEnvironmentVars() {
             acc[environmentVarsWritePrefix + k] = environmentVars[k];
             return acc;
         }, {});
-        console.log("PROC=", process.env);
+        console.log("PROC=", core.getInput("UAT_SSH_USERNAME"));
         console.log("ENV=", environment);
         console.log("ENV-CASING=", environmentCasing);
         console.log("ENV-VARS-READ-PREFIX - (PRE)=", environmentVarsReadPrefixRaw);
