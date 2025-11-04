@@ -25752,10 +25752,14 @@ async function buildAndPushDockerImage() {
         return;
     const environment = getInput("environment", "string", "main");
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
+    const appName = getInput("app-name", "string", process.env.APP_NAME ?? "");
     const dockerProjectEnvPath = getInput("docker-project-env-path", "string", "");
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsRaw = getInput("docker-write-env-vars", "array");
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
+    const dockerRegistryHost = getInput("docker-registry-host", "string", process.env.REGISTRY_HOST ?? "");
+    const dockerRegistryUsername = getInput("docker-registry-username", "string", process.env.REGISTRY_USERNAME ?? "");
+    const dockerRegistryPassword = getInput("docker-registry-password", "string", process.env.REGISTRY_PASSWORD ?? "");
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVars = environmentVarsRaw.reduce((acc, key) => {
         let instruction = "";
@@ -25792,11 +25796,10 @@ async function buildAndPushDockerImage() {
             return;
         print("log", `Docker:Shell:: closed with code - ${code}`);
     });
-    dockerShellProcess.stdin.write(`cat .env;`);
-    dockerShellProcess.stdin.write(`echo '${process.env.REGISTRY_PASSWORD}' | docker login -u ${process.env.REGISTRY_USERNAME} --password-stdin ${process.env.REGISTRY_HOST};`);
-    dockerShellProcess.stdin.write(`docker buildx build -f ${dockerfile} --platform=linux/amd64 -t ${process.env.APP_NAME} .;`);
-    dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
-    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${environment}/${process.env.APP_NAME};`);
+    dockerShellProcess.stdin.write(`echo '${dockerRegistryPassword}' | docker login -u ${dockerRegistryUsername} --password-stdin ${dockerRegistryHost};`);
+    dockerShellProcess.stdin.write(`docker buildx build -f ${dockerfile} --platform=linux/amd64 -t ${appName} .;`);
+    dockerShellProcess.stdin.write(`docker tag ${appName} ${dockerRegistryHost}/${environment}/${appName};`);
+    dockerShellProcess.stdin.write(`docker push ${dockerRegistryHost}/${environment}/${appName};`);
     dockerShellProcess.stdin.end();
 }
 function executeInstruction(value, instruction) {
