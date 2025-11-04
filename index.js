@@ -25696,6 +25696,12 @@ async function prepareEnvironmentVars() {
     const environment = getInput("environment");
     if (!environment)
         return;
+    if (process.env.REPO_VARS) {
+        Object.keys(process.env.REPO_VARS).forEach((k) => {
+            var _a;
+            process.env[k] = ((_a = process.env.REPO_VARS) !== null && _a !== void 0 ? _a : {})[k];
+        });
+    }
     const verbose = getInput("verbose");
     const environmentVarsRaw = getInput("environment-vars", "array");
     const environmentCasing = ((_a = getInput("environment-casing")) !== null && _a !== void 0 ? _a : "").toUpperCase();
