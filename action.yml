@@ -32,9 +32,10 @@ inputs:
     default: "UPPER"
     required: false
   # docker setup
-  dockerfile-image: 
-    description: "Flag to indicate if to build a docker image of a Dockerfile is in the project"
-    required: true
+  dockerize: 
+    description: "Flag to indicate if to build a docker image if a Dockerfile is in the project"
+    required: false
+    default: false
   dockerfile: 
     description: "The path to the Dockerfile for building the docker image"
     default: "Dockerfile"
@@ -49,6 +50,10 @@ inputs:
   docker-registry-password: 
     description: "Docker registry password"
     required: true
+  docker-write-env-vars: 
+    description: "The variables to put in the .env file in the Dockerfile project root"
+    default: |
+        DOKKU_CONFIGS|desanitize
 
 outputs:
   env-setup-completed:

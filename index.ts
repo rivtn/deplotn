@@ -1,15 +1,20 @@
 
 import * as process from "process";
 import * as core from "@actions/core";
+import { spawn } from "child_process";
 import * as github from "@actions/github";
 
 let __TEST_OBJECT: any = null;
+let verbose: undefined | boolean;
+let __ENVIRONMENT_VARS: { [key: string]: string; } = {};
 
 async function main(argc: number, argv: string[]) {
     if (argv.includes("--test")) {
         setupTest(argc, argv);
     }
-    prepareEnvironmentVars();
+    verbose = !!getInput("verbose");
+    await prepareEnvironmentVars();
+    await buildAndPushDockerImage();
 }
 
 async function prepareEnvironmentVars() {
@@ -44,7 +49,6 @@ async function prepareEnvironmentVars() {
             acc[environmentVarsWritePrefix + k] = environmentVars[k];
             return acc;
         }, {});
-        console.log("PROC=", process.env);
         console.log("ENV=", environment);
         console.log("ENV-CASING=", environmentCasing);
         console.log("ENV-VARS-READ-PREFIX - (PRE)=", environmentVarsReadPrefixRaw);
@@ -57,7 +61,54 @@ async function prepareEnvironmentVars() {
     }
     Object.keys(environmentVars).forEach((key) => {
         core.setOutput(environmentVarsWritePrefix + key, environmentVars[key]);
+        __ENVIRONMENT_VARS[environmentVarsWritePrefix + key] = environmentVars[key];
     });
+    core.setOutput("env-setup-completed", true);
+}
+
+async function buildAndPushDockerImage() {
+    const dockerize = getInput("dockerize", "boolean");
+    if (!dockerize) return;
+    const dockerfile = getInput("dockerfile", "string", "Dockerfile");
+    const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
+    const environmentVarsRaw = getInput("docker-write-env-vars", "array") as string[];
+    const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
+    const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
+    const environmentVars = environmentVarsRaw.reduce((acc: any, key: string) => {
+        let instruction = "";
+        if (key.includes("|")) {
+            const [_key, _instruction] = key.split("|");
+            key = _key;
+            instruction = _instruction;
+        }
+        key = expandVariables(key);
+        console.log("BEFORE YEAH --- ", key);
+        acc[key] = executeInstruction(process.env[environmentVarsReadPrefix + key] ?? "", instruction);
+        console.log("AFTER YEAH --- ", key, acc[key]);
+        return acc;
+    }, {});
+
+    if (verbose) {
+        console.log("THe envirnment variables --- ", environmentVars);
+        print("log", `echo "Preparing to build the image...";`);
+    }
+
+    const dockerShellProcess = spawn('sh');
+    dockerShellProcess.stdout.on('data', (data) => {
+        print("log", `${data}`);
+    });
+    dockerShellProcess.stderr.on('data', (data) => {
+        print("error", `${data}`);
+    });
+    dockerShellProcess.on('close', (code) => {
+        if (code === 0) return;
+        print("log", `Docker:Shell:: closed with code - ${code}`);
+    });
+    dockerShellProcess.stdin.write(`echo '${process.env.REGISTRY_PASSWORD}' | docker login -u ${process.env.REGISTRY_USERNAME} --password-stdin ${process.env.REGISTRY_HOST};`);
+    dockerShellProcess.stdin.write(`docker buildx build --platform=linux/amd64 -t ${process.env.APP_NAME} .`);
+    dockerShellProcess.stdin.write(`docker push ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME}`);
+    dockerShellProcess.stdin.write(`docker tag ${process.env.APP_NAME} ${process.env.REGISTRY_HOST}/${__ENVIRONMENT_VARS["environment"]}/${process.env.APP_NAME}`);
+    dockerShellProcess.stdin.end();
 }
 
 function executeInstruction(value: string, instruction: string) {
@@ -65,6 +116,7 @@ function executeInstruction(value: string, instruction: string) {
     else if (instruction === "LOWER") return value.toLowerCase();
     else if (instruction === "base64") return Buffer.from(value, "utf8").toString("base64");
     else if (instruction === "sanitize") return Buffer.from(value.replace("\n", "<=-=>").replace("\r", ""), "utf8").toString("base64").replace("\n", "<=-=>");
+    else if (instruction === "desanitize") return Buffer.from(value.replace("<=-=>", "\n"), "base64").toString("utf8").replace("<=-=>", "\n");
     return value;
 }
 
@@ -102,6 +154,14 @@ function getInput(name: string, type: string = "string", defaultValue?: any) {
         return value.split(__TEST_OBJECT ? "\\n" : '\n');
     }
     return value;
+}
+
+function print(action: "log" | "error" = "log", ...content: string[]) {
+    if (verbose === undefined) {
+        verbose = !!getInput("verbose");
+    }
+    if (!verbose) return;
+    console[action](...content);
 }
 
 function setupTest(argc: number, argv: string[]) {
