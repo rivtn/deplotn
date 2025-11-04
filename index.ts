@@ -15,6 +15,11 @@ async function main(argc: number, argv: string[]) {
 async function prepareEnvironmentVars() {
     const environment = getInput("environment");
     if (!environment) return;
+    if (process.env.REPO_VARS) {
+        Object.keys(process.env.REPO_VARS).forEach((k) => {
+            process.env[k] = ((process.env.REPO_VARS as any) ?? {})[k];
+        })
+    }
     const verbose = getInput("verbose");
     const environmentVarsRaw = getInput("environment-vars", "array") as string[];
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
