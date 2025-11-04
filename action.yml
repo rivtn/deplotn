@@ -20,7 +20,7 @@ inputs:
     description: "The list of variables to process and output for subsequent actions"
     required: true
     default: |
-        DOKKU_CONFIGS|sanitize
+        DOKKU_CONFIGS
   environment-vars-read-prefix:
     description: "The prefix for the environment variable when reading from inputs if available, e.g. UAT_, ${environment}_"
     required: false
@@ -56,8 +56,9 @@ inputs:
     required: false
   docker-write-env-vars: 
     description: "The variables to put in the .env file in the Dockerfile project root"
+    required: false
     default: |
-        DOKKU_CONFIGS|desanitize
+        DOKKU_CONFIGS
 
 outputs:
   env-setup-completed:
