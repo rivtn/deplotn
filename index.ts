@@ -38,7 +38,7 @@ async function prepareEnvironmentVars() {
             acc[environmentVarsWritePrefix + k] = environmentVars[k];
             return acc;
         }, {});
-        console.log("PROC=", await invokeGithubApi());
+        console.log("PROC=", process.env);
         console.log("ENV=", environment);
         console.log("ENV-CASING=", environmentCasing);
         console.log("ENV-VARS-READ-PREFIX - (PRE)=", environmentVarsReadPrefixRaw);
@@ -81,24 +81,6 @@ function expandVariables(value: string) {
         result += c;
     }
     return result;
-}
-
-async function invokeGithubApi() {
-    const githubToken = process.env.GITHUB_TOKEN;
-    if (!githubToken) {
-        core.setFailed("GITHUB_TOKEN is not set in the environment.");
-        return;
-    }
-    console.log("THE ACTIONS", githubToken);
-    const octokit = github.getOctokit(githubToken);
-    const { owner, repo } = github.context.repo;
-    const response = await octokit.rest.actions.listRepoVariables({
-        owner,
-        repo,
-    });
-
-    console.log("WE FOUND ---", response);
-    core.info(`Found ${response}`);
 }
 
 function getInput(name: string, type: string = "string", defaultValue?: any) {
