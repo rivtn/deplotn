@@ -1,0 +1,23 @@
+{
+  "ts-node": {
+    "files": true
+  },
+  "include": [
+    "./index.ts"
+  ],
+  "exclude": [
+    "./index.js"
+  ],
+  "compilerOptions": {
+    "strict": true,
+    "outDir": "./",
+    "rootDir": "./",
+    "target": "es2017",
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+  }
+}

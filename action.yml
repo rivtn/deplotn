@@ -1,0 +1,59 @@
+
+name: "deplotn"
+description: "Seamless cloud deployment. (Docker, VM, Dokku) By Rivtn"
+author: |
+  "Adewale Azeez <iamthecarisma@gmail.com>"
+
+inputs:
+  # app
+  app-name: 
+    description: "The name of your application after deployment"
+    required: true
+  verbose: 
+    description: "Print out as much log as possible for debugging"
+    required: false
+  # environment
+  environment: 
+    description: "Deployment environment"
+    required: true
+  environment-vars:
+    description: "The list of variables to process and output for subsequent actions"
+    required: true
+    default: |
+        DOKKU_CONFIGS|base64
+  environment-vars-read-prefix:
+    description: "The prefix for the environment variable when reading from inputs if available, e.g. UAT_, ${environment}_"
+    required: false
+  environment-vars-write-prefix:
+    description: "The prefix for the environment variable when writing to output if available, e.g. UAT_, ${environment}_"
+    required: false
+  environment-casing:
+    description: "Letter casing for the environment variables, options are UPPER, LOWER, NONE"
+    default: "UPPER"
+    required: false
+  # docker setup
+  dockerfile-image: 
+    description: "Flag to indicate if to build a docker image of a Dockerfile is in the project"
+    required: true
+  dockerfile: 
+    description: "The path to the Dockerfile for building the docker image"
+    default: "Dockerfile"
+    required: false
+  docker-registry-host: 
+    description: "Docker registry to push the built docker image"
+    default: "registry.cicd.rivtn.com"
+    required: false
+  docker-registry-username: 
+    description: "Docker registry username"
+    required: true
+  docker-registry-password: 
+    description: "Docker registry password"
+    required: true
+
+outputs:
+  env-setup-completed:
+    description: "The environment setup was completed successfully"
+
+runs:
+  using: 'node24'
+  main: 'index.js'
