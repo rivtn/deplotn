@@ -19,14 +19,14 @@ async function main(argc: number, argv: string[]) {
 }
 
 async function prepareEnvironmentVars() {
-    const environmentOutput = getInput("environment-output", "boolean");
-    if (!environmentOutput) return;
     if (process.env.REPO_VARS) {
         let parsed = JSON.parse(process.env.REPO_VARS);
         Object.keys(parsed).forEach((k) => {
             process.env[k] = parsed[k];
         })
     }
+    const environmentOutput = getInput("environment-output", "boolean");
+    if (!environmentOutput) return;
     const verbose = getInput("verbose");
     const environment = getInput("environment", "string", "main");
     const environmentVarsRaw = getInput("environment-vars", "array") as string[];
