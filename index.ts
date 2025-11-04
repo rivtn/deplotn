@@ -160,6 +160,7 @@ async function executeSshCommands() {
         if (`${data}`.includes("key fingerprint")) {
             sshProcess.stdin.write(`yes\n`);
         } else if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
+            print("log", "here we go -- welp ", sshPassword);
             sshProcess.stdin.write(`${sshPassword}\n`);
             return;
         }
@@ -172,6 +173,9 @@ async function executeSshCommands() {
             return;
         }
     });
+    process.stdin.write(`${sshPassword}`);
+    process.stdin.write(`${sshPassword}\n`);
+    process.stdin.write(`${sshPassword}`);
     sshProcess.stdin.write(`${sshPassword}`);
     sshProcess.stdin.write(`${sshPassword}\n`);
     sshProcess.stdin.write(`${sshPassword}`);
@@ -184,7 +188,7 @@ async function executeSshCommands() {
     if (getInput("dokku-deploy", "boolean")) {
         //sshProcess.stdin.write(`dokku apps:list;`);
     }
-    sshProcess.stdin.end();
+    //sshProcess.stdin.end();
 }
 
 function executeInstruction(value: string, instruction: string) {
