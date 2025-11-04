@@ -89,6 +89,7 @@ async function invokeGithubApi() {
         core.setFailed("GITHUB_TOKEN is not set in the environment.");
         return;
     }
+    console.log("THE ACTIONS", githubToken);
     const octokit = github.getOctokit(githubToken);
     const { owner, repo } = github.context.repo;
     const response = await octokit.rest.actions.listRepoVariables({
