@@ -25724,7 +25724,7 @@ async function prepareEnvironmentVars() {
             instruction = _instruction;
         }
         key = expandVariables(key);
-        acc[key] = executeInstruction(process.env[environmentVarsReadPrefix + key] ?? "", instruction);
+        acc[key] = executeInstruction(process.env[environmentVarsReadPrefix + key] ?? "", instruction)?.replaceAll("\r", "");
         return acc;
     }, {});
     if (verbose !== undefined) {
@@ -25771,10 +25771,10 @@ async function buildAndPushDockerImage() {
         }
         key = expandVariables(key);
         if (key in __ENVIRONMENT_VARS) {
-            acc[key] = executeInstruction(__ENVIRONMENT_VARS[key], instruction);
+            acc[key] = executeInstruction(__ENVIRONMENT_VARS[key], instruction)?.replaceAll("\r", "");
         }
         else {
-            acc[key] = process.env[environmentVarsReadPrefix + key];
+            acc[key] = process.env[environmentVarsReadPrefix + key]?.replaceAll("\r", "");
         }
         return acc;
     }, {});
