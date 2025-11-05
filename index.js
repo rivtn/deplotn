@@ -25870,9 +25870,9 @@ function executeInstruction(value, instruction) {
     else if (instruction === "base64")
         return Buffer.from(value, "utf8").toString("base64");
     else if (instruction === "sanitize")
-        return Buffer.from(value.replace("\n", "<=-=>").replaceAll("\r", ""), "utf8").toString("base64").replaceAll("\n", "<=-=>");
+        return Buffer.from(value.replaceAll("\r", "").replaceAll("\n", "~"), "utf8").toString("base64").replaceAll("\n", "~");
     else if (instruction === "desanitize")
-        return Buffer.from(value.replaceAll("<=-=>", "\n"), "base64").toString("utf8").replaceAll("<=-=>", "\n");
+        return Buffer.from(value.replaceAll("~", "\n"), "base64").toString("utf8").replaceAll("~", "\n");
     return value;
 }
 function expandVariables(value) {
