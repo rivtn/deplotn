@@ -186,7 +186,7 @@ function executeInstruction(value: string, instruction: string) {
     if (instruction === "UPPER") return value.toUpperCase();
     else if (instruction === "LOWER") return value.toLowerCase();
     else if (instruction === "base64") return Buffer.from(value, "utf8").toString("base64");
-    else if (instruction === "sanitize") return Buffer.from(value.replace("\n", "<=-=>").replaceAll("\r", ""), "utf8").toString("base64").replaceAll("\n", "<=-=>");
+    else if (instruction === "sanitize") return Buffer.from(value.replaceAll("\n", "<=-=>").replaceAll("\r", ""), "utf8").toString("base64").replaceAll("\n", "<=-=>");
     else if (instruction === "desanitize") return Buffer.from(value.replaceAll("<=-=>", "\n"), "base64").toString("utf8").replaceAll("<=-=>", "\n");
     return value;
 }
