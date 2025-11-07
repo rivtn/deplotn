@@ -43,7 +43,7 @@ async function main(argc: number, argv: string[]) {
         })
     }
     await prepareEnvironmentVars();
-    //await buildAndPushDockerImage();
+    await buildAndPushDockerImage();
     await executeSshCommands();
 }
 

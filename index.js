@@ -49278,7 +49278,7 @@ async function main(argc, argv) {
         });
     }
     await prepareEnvironmentVars();
-    //await buildAndPushDockerImage();
+    await buildAndPushDockerImage();
     await executeSshCommands();
 }
 async function prepareEnvironmentVars() {
