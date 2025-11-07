@@ -175,6 +175,17 @@ async function executeSshCommands() {
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
     console.log("SSH Variables:", "Host=" + sshHost, "Port=" + sshPort, "Username=" + sshUsername, "Password=" + (sshPassword ?? "*")[0] + "*******");
 
+    for (const environmentVar of environmentVarsRaw) {
+        const value = (environmentVars[environmentVar] ?? process.env[environmentVar] ?? "");
+        if (value.includes("=") && value.includes("\n")) {
+            const environmentVarParts = value.split("\n");
+            for (const environmentVarPart of environmentVarParts) {
+                sshCommands.push(`export ${environmentVarPart}`);
+            }
+        } else {
+            sshCommands.push(`export ${environmentVar}=` + value);
+        }
+    }
     if (dokkuDeploy) {
         const dokkuSetupSsl = getInput("dokku-setup-ssl", "boolean", false);
         const dokkuDomains = (getInput("dokku-domains", "array", []) as string[]);
@@ -189,9 +200,6 @@ async function executeSshCommands() {
         const dokkuEnvironment = getInput("dokku-environment", "string", environmentVars["DOKKU_ENVIRONMENT"] ?? process.env.DOKKU_ENVIRONMENT ?? environment);
         const dokkuRegistryHost = getInput("dokku-registry-host", "string", environmentVars["DOKKU_REGISTRY_HOST"] ?? process.env.DOKKU_REGISTRY_HOST ?? registryHost);
         const dokkuContainerPort = getInput("dokku-container-port", "string", environmentVars["DOKKU_CONTAINER_PORT"] ?? process.env.DOKKU_CONTAINER_PORT ?? containerPort);
-        for (const environmentVar of environmentVarsRaw) {
-            sshCommands.push(`export ${environmentVar}=` + (environmentVars[environmentVar] ?? process.env[environmentVar]));
-        }
         sshCommands.push(`dokku apps:create ${dokkuAppName}`);
         if ("DOKKU_CONFIGS" in environmentVars) {
             sshCommands.push(`dokku config:set ${dokkuAppName} ${environmentVars["DOKKU_CONFIGS"].replaceAll("\n", " ")}`);
