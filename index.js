@@ -49278,9 +49278,10 @@ async function main(argc, argv) {
         });
     }
     await prepareEnvironmentVars();
-    await buildAndPushDockerImage(async () => {
+    /*await buildAndPushDockerImage(async () => {
         await executeSshCommands();
-    });
+    });*/
+    await executeSshCommands();
 }
 async function prepareEnvironmentVars() {
     const environmentOutput = getInput("environment-output", "boolean");
@@ -49294,7 +49295,7 @@ async function prepareEnvironmentVars() {
     const environmentVarsWritePrefixRaw = getInput("environment-vars-write-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVarsWritePrefix = executeInstruction(expandVariables(environmentVarsWritePrefixRaw), environmentCasing);
-    const environmentVars = environmentVarsRaw.reduce((acc, key) => {
+    const environmentVars = environmentVarsRaw?.reduce((acc, key) => {
         let instruction = "";
         if (key.includes("|")) {
             const [_key, _instruction] = key.split("|");
@@ -49385,6 +49386,7 @@ async function buildAndPushDockerImage(onComplete) {
     dockerShellProcess.stdin.end();
 }
 async function executeSshCommands() {
+    const sshRuntimeMinutes = getInput("ssh-runtime-minutes", "number", 10);
     const environmentVarsRaw = getInput("ssh-expose-vars", "array", []);
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
@@ -49465,7 +49467,7 @@ async function executeSshCommands() {
         }
         sshCommands.push(`dokku ps:rebuild ${dokkuAppName}`);
     }
-    sshCommands.push("exit");
+    //sshCommands.push("exit");
     const conn = new ssh2_1.Client();
     console.log("SSH Commands:", sshCommands);
     const sshCommandsQueue = new MicroQueue(sshCommands ?? []);
@@ -49473,6 +49475,10 @@ async function executeSshCommands() {
         conn.shell((err, stream) => {
             if (err)
                 throw err;
+            const waiter = setTimeout(() => {
+                stream.write("exit\n");
+                print("log", `Force closing the ssh shell after ${sshRuntimeMinutes} minutes\n`);
+            }, sshRuntimeMinutes * 60 * 1000);
             stream.on('close', (code, signal) => {
                 if (code !== 0) {
                     print("error", `SSH:Shell:: closed with code - ${code} - ${signal}`);
@@ -49481,7 +49487,10 @@ async function executeSshCommands() {
                 conn.end();
             }).on('data', (data) => {
                 print("log!", `${data}`);
-                if (`${data}`.includes("~#")) {
+                if (`${data}`.trim() === "logout") {
+                    clearTimeout(waiter);
+                }
+                else if (`${data}`.includes("~#")) {
                     sshCommandsQueue.dequeue(stream.write.bind(stream), "\n");
                 }
             }).stderr.on('data', (data) => {
@@ -49537,6 +49546,9 @@ function getInput(name, type = "string", defaultValue) {
     }
     if (type === "boolean") {
         return value.toUpperCase() === "TRUE" || value;
+    }
+    if (type === "number") {
+        return parseInt(value ?? "0");
     }
     else if (type === "flatten_string") {
         return value.split('\n').join(' ');

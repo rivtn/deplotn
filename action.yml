@@ -78,6 +78,10 @@ inputs:
   ssh-commands: 
     description: "Commands to execute in the ssh shell"
     required: false
+  ssh-runtime-minutes: 
+    description: "Force close the ssh after the specified minutes to prevent indefinite pipeline execution"
+    required: false
+    default: 10
   ssh-expose-vars: 
     description: "The variables to expose to the ssh shell"
     required: false
