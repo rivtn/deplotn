@@ -178,6 +178,7 @@ async function executeSshCommands() {
     if (dokkuDeploy) {
         const dokkuSetupSsl = getInput("dokku-setup-ssl", "boolean", false);
         const dokkuDomains = (getInput("dokku-domains", "array", []) as string[]);
+        const dokkuEnvironmentVars = getInput("dokku-environment-vars", "array", []);
         const appName = getInput("app-name", "string", environmentVars["APP_NAME"] ?? process.env.APP_NAME ?? "");
         const baseDomain = getInput("base-domain", "string", environmentVars["BASE_DOMAIN"] ?? process.env.BASE_DOMAIN ?? "");
         const environment = getInput("environment", "string", environmentVars["ENVIRONMENT"] ?? process.env.ENVIRONMENT ?? "");
@@ -192,7 +193,12 @@ async function executeSshCommands() {
             sshCommands.push(`export ${environmentVar}=` + (environmentVars[environmentVar] ?? process.env[environmentVar]));
         }
         sshCommands.push(`dokku apps:create ${dokkuAppName}`);
-        sshCommands.push(`dokku config:set ${dokkuAppName} ${environmentVars["DOKKU_CONFIGS"]}`);
+        if ("DOKKU_CONFIGS" in environmentVars) {
+            sshCommands.push(`dokku config:set ${dokkuAppName} ${environmentVars["DOKKU_CONFIGS"].replaceAll("\n", " ")}`);
+        }
+        if (dokkuEnvironmentVars?.length) {
+            sshCommands.push(`dokku config:set ${dokkuAppName} ${dokkuEnvironmentVars.join(" ")}`);
+        }
         if (dokkuBaseDomain) {
             sshCommands.push(`dokku domains:add ${dokkuAppName} ${dokkuAppName}.${dokkuEnvironment ? (dokkuEnvironment + ".") : ""}${dokkuBaseDomain}`);
         }

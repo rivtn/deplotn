@@ -87,6 +87,9 @@ inputs:
     description: "Flag to indicate if to deploy to vm using dokku"
     required: false
     default: false
+  dokku-environment-vars: 
+    description: "Environment variable for the deployed dokku app"
+    required: false
   dokku-app-name: 
     description: "The app name for dokku app deployment, e.g dokku-app-name=example domain is example.base-domain, defaults to app-name or APP_NAME variable"
     required: false
