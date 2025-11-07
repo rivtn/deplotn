@@ -49405,12 +49405,15 @@ async function executeSshCommands() {
     const environmentVarsSshCommands = [];
     for (const environmentVar of environmentVarsRaw) {
         const value = (environmentVars[environmentVar] ?? process.env[environmentVar] ?? "");
-        environmentVarsSshCommands.unshift(`export ${environmentVar}=` + value.replaceAll("\n", " "));
         if (value.includes("=") && value.includes("\n")) {
+            environmentVarsSshCommands.push(`export ${environmentVar}='` + value.replaceAll("\n", " ") + `'`);
             const environmentVarParts = value.split("\n");
             for (const environmentVarPart of environmentVarParts) {
                 environmentVarsSshCommands.push(`export ${environmentVarPart.replaceAll("\r", "")}`);
             }
+        }
+        else {
+            environmentVarsSshCommands.push(`export ${environmentVar}=` + value);
         }
     }
     const dokkuDeploy = getInput("dokku-deploy", "boolean", false);
