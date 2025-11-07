@@ -43,8 +43,9 @@ async function main(argc: number, argv: string[]) {
         })
     }
     await prepareEnvironmentVars();
-    await buildAndPushDockerImage();
-    await executeSshCommands();
+    await buildAndPushDockerImage(async () => {
+        await executeSshCommands();
+    });
 }
 
 async function prepareEnvironmentVars() {
@@ -91,7 +92,7 @@ async function prepareEnvironmentVars() {
     core.setOutput("env-setup-completed", true);
 }
 
-async function buildAndPushDockerImage() {
+async function buildAndPushDockerImage(onComplete: () => void) {
     if (!getInput("dockerize", "boolean")) return;
     const environment = getInput("environment", "string", "main");
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
@@ -136,7 +137,10 @@ async function buildAndPushDockerImage() {
         print("error", `${data}`);
     });
     dockerShellProcess.on('close', (code) => {
-        if (code === 0) return;
+        if (code === 0) {
+            onComplete();
+            return;
+        }
         print("log", `Docker:Shell:: closed with code - ${code}`);
         core.setFailed(`${code}`);
     });
