@@ -182,7 +182,7 @@ async function executeSshCommands() {
     const dokkuDeploy = getInput("dokku-deploy", "boolean", false);
     const sshHost = getInput("ssh-host", "string", environmentVars["SSH_HOST"] ?? process.env.SSH_HOST ?? "");
     const sshPort = getInput("ssh-port", "string", environmentVars["SSH_PORT"] ?? process.env.SSH_PORT ?? "");
-    const sshCommands = (getInput("ssh-commands", "array", []) as string[]).concat(...environmentVarsSshCommands);
+    const sshCommands = environmentVarsSshCommands.concat(getInput("ssh-commands", "array", []) as string[]);
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
     console.log("SSH Variables:", "Host=" + sshHost, "Port=" + sshPort, "Username=" + sshUsername, "Password=" + (sshPassword ?? "*")[0] + "*******");
