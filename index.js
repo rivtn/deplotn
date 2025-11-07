@@ -49402,25 +49402,24 @@ async function executeSshCommands() {
         }
         return acc;
     }, {});
-    const dokkuDeploy = getInput("dokku-deploy", "boolean", false);
-    const sshCommands = getInput("ssh-commands", "array", []);
-    const sshHost = getInput("ssh-host", "string", environmentVars["SSH_HOST"] ?? process.env.SSH_HOST ?? "");
-    const sshPort = getInput("ssh-port", "string", environmentVars["SSH_PORT"] ?? process.env.SSH_PORT ?? "");
-    const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
-    const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
-    console.log("SSH Variables:", "Host=" + sshHost, "Port=" + sshPort, "Username=" + sshUsername, "Password=" + (sshPassword ?? "*")[0] + "*******");
+    const environmentVarsSshCommands = [];
     for (const environmentVar of environmentVarsRaw) {
         const value = (environmentVars[environmentVar] ?? process.env[environmentVar] ?? "");
+        environmentVarsSshCommands.unshift(`export ${environmentVar}=` + value.replaceAll("\n", " "));
         if (value.includes("=") && value.includes("\n")) {
             const environmentVarParts = value.split("\n");
             for (const environmentVarPart of environmentVarParts) {
-                sshCommands.push(`export ${environmentVarPart}`);
+                environmentVarsSshCommands.push(`export ${environmentVarPart.replaceAll("\r", "")}`);
             }
         }
-        else {
-            sshCommands.push(`export ${environmentVar}=` + value);
-        }
     }
+    const dokkuDeploy = getInput("dokku-deploy", "boolean", false);
+    const sshHost = getInput("ssh-host", "string", environmentVars["SSH_HOST"] ?? process.env.SSH_HOST ?? "");
+    const sshPort = getInput("ssh-port", "string", environmentVars["SSH_PORT"] ?? process.env.SSH_PORT ?? "");
+    const sshCommands = getInput("ssh-commands", "array", []).concat(...environmentVarsSshCommands);
+    const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
+    const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
+    console.log("SSH Variables:", "Host=" + sshHost, "Port=" + sshPort, "Username=" + sshUsername, "Password=" + (sshPassword ?? "*")[0] + "*******");
     if (dokkuDeploy) {
         const dokkuSetupSsl = getInput("dokku-setup-ssl", "boolean", false);
         const dokkuDomains = getInput("dokku-domains", "array", []);
