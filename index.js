@@ -49278,10 +49278,9 @@ async function main(argc, argv) {
         });
     }
     await prepareEnvironmentVars();
-    /*await buildAndPushDockerImage(async () => {
+    await buildAndPushDockerImage(async () => {
         await executeSshCommands();
-    });*/
-    await executeSshCommands();
+    });
 }
 async function prepareEnvironmentVars() {
     const environmentOutput = getInput("environment-output", "boolean");
@@ -49467,7 +49466,7 @@ async function executeSshCommands() {
         }
         sshCommands.push(`dokku ps:rebuild ${dokkuAppName}`);
     }
-    //sshCommands.push("exit");
+    sshCommands.push("exit");
     const conn = new ssh2_1.Client();
     console.log("SSH Commands:", sshCommands);
     const sshCommandsQueue = new MicroQueue(sshCommands ?? []);
