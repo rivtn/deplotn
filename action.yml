@@ -75,10 +75,39 @@ inputs:
   ssh-password: 
     description: "The SSH server password"
     required: false
+  ssh-commands: 
+    description: "Commands to execute in the ssh shell"
+    required: false
+  ssh-expose-vars: 
+    description: "The variables to expose to the ssh shell"
+    required: false
+    default: |
+        DOKKU_CONFIGS
   dokku-deploy: 
     description: "Flag to indicate if to deploy to vm using dokku"
     required: false
     default: false
+  dokku-app-name: 
+    description: "The app name for dokku app deployment, e.g dokku-app-name=example domain is example.base-domain, defaults to app-name or APP_NAME variable"
+    required: false
+  dokku-base-domain: 
+    description: "Base domain for dokku app deployment, e.g dokku-base-domain=example.com domain is app-name.example.com, defaults to base-domain or BASE_DOMAIN variable"
+    required: false
+  dokku-environment: 
+    description: "The environment to prefix to base domain for dokku app, e.g dokku-environment=prod domain is app-name.prod.base-domain, defaults to environment or ENVIRONMENT variable"
+    required: false
+  dokku-container-port: 
+    description: "Container port to export for connection"
+    required: false
+  dokku-registry-host: 
+    description: "Docker registry to pull the dokku image for deployment, default to registry-host or REGISTRY_HOST variable"
+    required: false
+  dokku-setup-ssl: 
+    description: "Flag to indicate to configure the SSL using letsencrypt dokku plugin"
+    required: false
+  dokku-domains: 
+    description: "The domains to configure for the dokku app"
+    required: false
 
 outputs:
   env-setup-completed:

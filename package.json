@@ -5,7 +5,7 @@
   "main": "index.ts",
   "scripts": {
     "build": "ncc build index.ts -o ./",
-    "test": "tsc index.ts; node index.js --test"
+    "test": "npm run build; node index.js --test"
   },
   "repository": {
     "type": "git",
@@ -22,9 +22,11 @@
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.1",
     "@vercel/ncc": "^0.38.4",
+    "ssh2": "^1.17.0",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/node": "^24.10.0"
+    "@types/node": "^24.10.0",
+    "@types/ssh2": "^1.15.5"
   }
 }

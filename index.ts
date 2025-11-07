@@ -1,5 +1,6 @@
 
 import * as fs from "fs";
+import { Client } from "ssh2";
 import * as process from "process";
 import * as core from "@actions/core";
 import { spawn } from "child_process";
@@ -8,6 +9,27 @@ import * as github from "@actions/github";
 let __TEST_OBJECT: any = null;
 let verbose: undefined | boolean;
 let __ENVIRONMENT_VARS: { [key: string]: string; } = {};
+
+class MicroQueue<T> {
+
+    private elements: T[];
+
+    constructor(elements: T[]) {
+        this.elements = elements;
+    }
+
+    dequeue(fn?: (entry: T) => void, suffix?: T) {
+        if (this.elements.length === 0) {
+            return undefined;
+        }
+        let element = this.elements.shift();
+        if (element) {
+            if (suffix) element += suffix as any;
+            if (fn) fn(element);
+        }
+        return element;
+    }
+}
 
 async function main(argc: number, argv: string[]) {
     if (argv.includes("--test")) {
@@ -21,8 +43,8 @@ async function main(argc: number, argv: string[]) {
         })
     }
     await prepareEnvironmentVars();
-    await buildAndPushDockerImage();
-    //await executeSshCommands();
+    //await buildAndPushDockerImage();
+    await executeSshCommands();
 }
 
 async function prepareEnvironmentVars() {
@@ -126,11 +148,11 @@ async function buildAndPushDockerImage() {
 }
 
 async function executeSshCommands() {
-    print("log", `Connecting to SSH server...`);
+    const environmentVarsRaw = getInput("ssh-expose-vars", "array", []) as string[];
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
-    const environmentVars = ["SSH_HOST", "SSH_PORT", "SSH_USERNAME", "SSH_PASSWORD"].reduce((acc: any, key: string) => {
+    const environmentVars: { [key: string]: string; } = ["SSH_HOST", "SSH_PORT", "SSH_USERNAME", "SSH_PASSWORD"].concat(...environmentVarsRaw).reduce((acc: any, key: string) => {
         let instruction = "";
         if (key.includes("|")) {
             const [_key, _instruction] = key.split("|");
@@ -145,41 +167,79 @@ async function executeSshCommands() {
         }
         return acc;
     }, {});
-    print("log", "SSH Variables", environmentVars);
+    const dokkuDeploy = getInput("dokku-deploy", "boolean", false);
+    const sshCommands = (getInput("ssh-commands", "array", []) as string[]);
     const sshHost = getInput("ssh-host", "string", environmentVars["SSH_HOST"] ?? process.env.SSH_HOST ?? "");
     const sshPort = getInput("ssh-port", "string", environmentVars["SSH_PORT"] ?? process.env.SSH_PORT ?? "");
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
+    console.log("SSH Variables:", "Host=" + sshHost, "Port=" + sshPort, "Username=" + sshUsername, "Password=" + (sshPassword ?? "*")[0] + "*******");
 
-    const sshProcess = spawn('ssh', ["-o", "StrictHostKeyChecking=no", "-p", sshPort, `${sshUsername}@${sshHost}`]);
-    sshProcess.stdout.on('data', (data) => {
-        print("log", `${data}`);
-        if (`${data}`.includes("key fingerprint")) {
-            sshProcess.stdin.write(`yes\n`);
-        } else if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
-            print("log", "here we go -- welp ", sshPassword);
-            sshProcess.stdin.write(`${sshPassword}\n`);
-            return;
+    if (dokkuDeploy) {
+        const dokkuSetupSsl = getInput("dokku-setup-ssl", "boolean", false);
+        const dokkuDomains = (getInput("dokku-domains", "array", []) as string[]);
+        const appName = getInput("app-name", "string", environmentVars["APP_NAME"] ?? process.env.APP_NAME ?? "");
+        const baseDomain = getInput("base-domain", "string", environmentVars["BASE_DOMAIN"] ?? process.env.BASE_DOMAIN ?? "");
+        const environment = getInput("environment", "string", environmentVars["ENVIRONMENT"] ?? process.env.ENVIRONMENT ?? "");
+        const registryHost = getInput("registry-host", "string", environmentVars["REGISTRY_HOST"] ?? process.env.REGISTRY_HOST ?? "");
+        const containerPort = getInput("container-port", "string", environmentVars["CONTAINER_PORT"] ?? process.env.CONTAINER_PORT ?? "");
+        const dokkuAppName = getInput("dokku-app-name", "string", environmentVars["DOKKU_APP_NAME"] ?? process.env.DOKKU_APP_NAME ?? appName);
+        const dokkuBaseDomain = getInput("dokku-base-domain", "string", environmentVars["DOKKU_BASE_DOMAIN"] ?? process.env.DOKKU_BASE_DOMAIN ?? baseDomain);
+        const dokkuEnvironment = getInput("dokku-environment", "string", environmentVars["DOKKU_ENVIRONMENT"] ?? process.env.DOKKU_ENVIRONMENT ?? environment);
+        const dokkuRegistryHost = getInput("dokku-registry-host", "string", environmentVars["DOKKU_REGISTRY_HOST"] ?? process.env.DOKKU_REGISTRY_HOST ?? registryHost);
+        const dokkuContainerPort = getInput("dokku-container-port", "string", environmentVars["DOKKU_CONTAINER_PORT"] ?? process.env.DOKKU_CONTAINER_PORT ?? containerPort);
+        for (const environmentVar of environmentVarsRaw) {
+            sshCommands.push(`export ${environmentVar}=` + (environmentVars[environmentVar] ?? process.env[environmentVar]));
         }
-    });
-    sshProcess.stderr.on('data', (data) => {
-        print("error", `${data}`);
-        if (`${data}`.includes("Permission denied") || (`${data}`.includes("password:") && `${data}`.includes("@" + sshHost))) {
-            print("log", "here we go ", sshPassword);
-            sshProcess.stdin.write(`${sshPassword}`);
-            sshProcess.stdin.end();
+        sshCommands.push(`dokku apps:create ${dokkuAppName}`);
+        sshCommands.push(`dokku config:set ${dokkuAppName} ${environmentVars["DOKKU_CONFIGS"]}`);
+        if (dokkuBaseDomain) {
+            sshCommands.push(`dokku domains:add ${dokkuAppName} ${dokkuAppName}.${dokkuEnvironment ? (dokkuEnvironment + ".") : ""}${dokkuBaseDomain}`);
         }
-    });
-    sshProcess.on('close', (code) => {
-        if (code === 0) return;
-        print("log", `SSH:Shell:: closed with code - ${code}`);
-        core.setFailed(`${code}`);
-    });
-    //sshProcess.stdin.write(`dokku apps:list;`);
-    if (getInput("dokku-deploy", "boolean")) {
-        //sshProcess.stdin.write(`dokku apps:list;`);
+        for (const dokkuDomain of dokkuDomains) {
+            sshCommands.push(`dokku domains:add ${dokkuAppName} ${dokkuDomain}`);
+        }
+        sshCommands.push(`dokku git:from-image ${dokkuAppName} ${dokkuRegistryHost}/${dokkuEnvironment ? (dokkuEnvironment + "/") : ""}${dokkuAppName}`);
+        if (dokkuContainerPort) {
+            sshCommands.push(`dokku ports:add ${dokkuAppName} http:80:${dokkuContainerPort}`);
+        }
+        if (dokkuSetupSsl) {
+            sshCommands.push(`INTERNAL_URL=($(dokku domains:report ${dokkuAppName} | grep "cloud.internal" | grep ${dokkuAppName}))`);
+            sshCommands.push("INTERNAL_URL=${INTERNAL_URL[3]}");
+            sshCommands.push(`dokku domains:remove ${dokkuAppName} $INTERNAL_URL`);
+            sshCommands.push(`$(dokku letsencrypt:active ${dokkuAppName}) || dokku letsencrypt:enable ${dokkuAppName}`);
+        }
+        sshCommands.push(`dokku ps:rebuild ${dokkuAppName}`);
     }
-    //sshProcess.stdin.end();
+    sshCommands.push("exit");
+
+    const conn = new Client();
+    console.log("SSH Commands:", sshCommands);
+    const sshCommandsQueue = new MicroQueue(sshCommands ?? []);
+    conn.on('ready', () => {
+        conn.shell((err, stream) => {
+            if (err) throw err;
+            stream.on('close', (code: any, signal: any) => {
+                if (code !== 0) {
+                    print("error", `SSH:Shell:: closed with code - ${code} - ${signal}`);
+                    core.setFailed(`${code}`);
+                }
+                conn.end();
+            }).on('data', (data: any) => {
+                print("log!", `${data}`);
+                if (`${data}`.includes("~#")) {
+                    sshCommandsQueue.dequeue(stream.write.bind(stream), "\n");
+                }
+            }).stderr.on('data', (data: any) => {
+                print("error", `${data}`);
+            });
+        });
+    }).connect({
+        host: '34.154.165.2',
+        port: 22,
+        username: 'root',
+        password: 'URivtn123##PA55@@'
+    });
 }
 
 function executeInstruction(value: string, instruction: string) {
@@ -227,7 +287,7 @@ function getInput(name: string, type: string = "string", defaultValue?: any) {
     return value;
 }
 
-function print(action: "log" | "log!" | "error" = "log", ...content: string[]) {
+function print(action: "log" | "log!" | "error" = "log", ...content: any[]) {
     if (verbose === undefined) {
         verbose = !!getInput("verbose");
     }

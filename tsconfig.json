@@ -19,5 +19,6 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
+    "lib": ["dom", "es2021", "ES2021.String"],
   }
 }
