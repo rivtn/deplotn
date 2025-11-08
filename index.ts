@@ -253,7 +253,7 @@ async function executeSshCommands() {
                 conn.end();
             }).on('data', (data: any) => {
                 print("log!", `${data}`);
-                if (`${data}`.trim() === "logout") {
+                if (`${data}`.includes("logout")) {
                     clearTimeout(waiter);
                 } else if (`${data}`.includes("~#")) {
                     sshCommandsQueue.dequeue(stream.write.bind(stream), "\n");
