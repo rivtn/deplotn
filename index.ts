@@ -192,6 +192,10 @@ async function executeSshCommands() {
     const sshCommands = environmentVarsSshCommands.concat(getInput("ssh-commands", "array", []) as string[]);
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
+
+    if (!sshHost || !sshCommands.length) {
+        return;
+    }
     console.log("SSH Variables:", "Host=" + sshHost, "Port=" + sshPort, "Username=" + sshUsername, "Password=" + (sshPassword ?? "*")[0] + "*******");
 
     if (dokkuDeploy) {
@@ -219,7 +223,12 @@ async function executeSshCommands() {
             sshCommands.push(`dokku domains:add ${dokkuAppName} ${dokkuAppName}.${dokkuEnvironment ? (dokkuEnvironment + ".") : ""}${dokkuBaseDomain}`);
         }
         for (const dokkuDomain of dokkuDomains) {
-            sshCommands.push(`dokku domains:add ${dokkuAppName} ${dokkuDomain}`);
+            const parts = dokkuDomain.split("|");
+            const domain = parts[0];
+            if (parts.length > 1) {
+                if (environment !== parts[1]) continue;
+            }
+            sshCommands.push(`dokku domains:add ${dokkuAppName} ${domain}`);
         }
         sshCommands.push(`dokku git:from-image ${dokkuAppName} ${dokkuRegistryHost}/${dokkuEnvironment ? (dokkuEnvironment + "/") : ""}${dokkuAppName}`);
         if (dokkuContainerPort) {
