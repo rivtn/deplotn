@@ -49506,10 +49506,10 @@ async function executeSshCommands() {
             });
         });
     }).connect({
-        host: '34.154.165.2',
-        port: 22,
-        username: 'root',
-        password: 'URivtn123##PA55@@'
+        host: sshHost,
+        port: sshPort,
+        username: sshUsername,
+        password: sshPassword
     });
 }
 function executeInstruction(value, instruction) {
