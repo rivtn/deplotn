@@ -49327,7 +49327,7 @@ async function prepareEnvironmentVars() {
     core.setOutput("env-setup-completed", true);
 }
 async function buildAndPushDockerImage(onComplete) {
-    if (true) {
+    if (!getInput("dockerize", "boolean")) {
         onComplete();
         return;
     }
@@ -49393,8 +49393,8 @@ async function buildAndPushDockerImage(onComplete) {
 }
 async function executeSshCommands() {
     const sshRuntimeMinutes = getInput("ssh-runtime-minutes", "number", 10);
-    const environmentVarsRaw = getInput("ssh-expose-vars", "array", []);
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
+    const environmentVarsRaw = getInput("ssh-expose-vars", "array", []);
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const environmentVarsReadPrefix = executeInstruction(expandVariables(environmentVarsReadPrefixRaw), environmentCasing);
     const environmentVars = ["SSH_HOST", "SSH_PORT", "SSH_USERNAME", "SSH_PASSWORD"].concat(...environmentVarsRaw).reduce((acc, key) => {
@@ -49435,11 +49435,6 @@ async function executeSshCommands() {
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
     const sshPassphrase = getInput("ssh-passphrase", "string", environmentVars["SSH_PASSPHRASE"] ?? process.env.SSH_PASSPHRASE ?? "");
     const sshPrivateKey = getInput("ssh-privatekey", "string", environmentVars["SSH_PRIVATEKEY"] ?? process.env.SSH_PRIVATEKEY ?? "");
-    console.log("WE HERE --------------- 00 ---------------", sshPrivateKey);
-    console.log("WE HERE --------------- 11 ---------------", environmentVars["SSH_PRIVATEKEY"]);
-    console.log("WE HERE --------------- 22 ---------------", process.env.SSH_PRIVATEKEY);
-    console.log("WE HERE --------------- 33 ---------------", getInput("ssh-privatekey", "string"));
-    console.log("WE HERE --------------- 44 ---------------", environmentVars);
     if (!sshHost || !sshCommands.length) {
         return;
     }
@@ -49510,7 +49505,6 @@ async function executeSshCommands() {
     if (sshPrivateKey) {
         connPayload.privateKey = sshPrivateKey;
     }
-    console.log("WE HER ------", connPayload);
     conn.on('ready', () => {
         conn.shell((err, stream) => {
             if (err)
