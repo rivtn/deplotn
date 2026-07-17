@@ -97,6 +97,7 @@ async function buildAndPushDockerImage(onComplete: () => void) {
         onComplete();
         return;
     }
+    console.log("-------------------", getInput("dockerize", "boolean"), "-----------------------");
     const environment = getInput("environment", "string", "main");
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
     const dockerImageTag = getInput("docker-image-tag", "string", "");
