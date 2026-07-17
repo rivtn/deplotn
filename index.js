@@ -49510,7 +49510,6 @@ async function executeSshCommands() {
         conn.shell((err, stream) => {
             if (err)
                 throw err;
-            console.log("WE ENTERED HERE, what to do wait on data or fire immediately");
             const waiter = setTimeout(() => {
                 stream.write("exit\n");
                 print("log", `Force closing the ssh shell after ${sshRuntimeMinutes} minutes\n`);
@@ -49526,7 +49525,7 @@ async function executeSshCommands() {
                 if (`${data}`.includes("logout")) {
                     clearTimeout(waiter);
                 }
-                else if (`${data}`.includes("~#")) {
+                else if (`${data}`.includes("~#") || `${data}`.includes("Last login")) {
                     sshCommandsQueue.dequeue(stream.write.bind(stream), "\n");
                 }
             }).stderr.on('data', (data) => {
