@@ -292,7 +292,7 @@ async function executeSshCommands() {
                 print("log!", `${data}`);
                 if (`${data}`.includes("logout")) {
                     clearTimeout(waiter);
-                } else if (`${data}`.includes("~#") || `${data}`.includes("Last login")) {
+                } else if (`${data}`.includes("~#") || `${data}`.includes("~$") || `${data}`.includes("Last login")) {
                     sshCommandsQueue.dequeue(stream.write.bind(stream), "\n");
                 }
             }).stderr.on('data', (data: any) => {
