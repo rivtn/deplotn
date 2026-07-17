@@ -93,7 +93,7 @@ async function prepareEnvironmentVars() {
 }
 
 async function buildAndPushDockerImage(onComplete: () => void) {
-    if (!getInput("dockerize", "boolean")) {
+    if (true) {
         onComplete();
         return;
     }
