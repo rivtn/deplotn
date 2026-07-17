@@ -49510,6 +49510,7 @@ async function executeSshCommands() {
         conn.shell((err, stream) => {
             if (err)
                 throw err;
+            console.log("WE ENTERED HERE, what to do wait on data or fire immediately");
             const waiter = setTimeout(() => {
                 stream.write("exit\n");
                 print("log", `Force closing the ssh shell after ${sshRuntimeMinutes} minutes\n`);
