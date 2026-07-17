@@ -49327,7 +49327,7 @@ async function prepareEnvironmentVars() {
     core.setOutput("env-setup-completed", true);
 }
 async function buildAndPushDockerImage(onComplete) {
-    console.log("--------------- 000000000 ------------", getInput("dockerize", "boolean"), "||||", getInput("dockerize"));
+    console.log("--------------- 000000000 ------------", typeof getInput("dockerize", "boolean"), "||||", getInput("dockerize"));
     if (!getInput("dockerize", "boolean")) {
         onComplete();
         return;
@@ -49575,7 +49575,7 @@ function getInput(name, type = "string", defaultValue) {
         return defaultValue;
     }
     if (type === "boolean") {
-        return value.toUpperCase() === "TRUE" || value;
+        return value.toUpperCase() === "TRUE";
     }
     if (type === "number") {
         return parseInt(value ?? "0");

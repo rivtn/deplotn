@@ -93,7 +93,7 @@ async function prepareEnvironmentVars() {
 }
 
 async function buildAndPushDockerImage(onComplete: () => void) {
-    console.log("--------------- 000000000 ------------", getInput("dockerize", "boolean"), "||||", getInput("dockerize"));
+    console.log("--------------- 000000000 ------------", typeof getInput("dockerize", "boolean"), "||||", getInput("dockerize"));
     if (!getInput("dockerize", "boolean")) {
         onComplete();
         return;
@@ -338,7 +338,7 @@ function getInput(name: string, type: string = "string", defaultValue?: any) {
         return defaultValue;
     }
     if (type === "boolean") {
-        return value.toUpperCase() === "TRUE" || value;
+        return value.toUpperCase() === "TRUE";
     } if (type === "number") {
         return parseInt(value ?? "0");
     } else if (type === "flatten_string") {
