@@ -45,7 +45,6 @@ inputs:
     required: false
   docker-registry-host: 
     description: "Docker registry to push the built docker image"
-    default: "registry.cicd.rivtn.com"
     required: false
   docker-registry-username: 
     description: "Docker registry username"
