@@ -93,6 +93,7 @@ async function prepareEnvironmentVars() {
 }
 
 async function buildAndPushDockerImage(onComplete: () => void) {
+    console.log("--------------- 000000000 ------------", getInput("dockerize", "boolean"), "||||", getInput("dockerize"));
     if (!getInput("dockerize", "boolean")) {
         onComplete();
         return;

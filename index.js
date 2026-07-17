@@ -49327,6 +49327,7 @@ async function prepareEnvironmentVars() {
     core.setOutput("env-setup-completed", true);
 }
 async function buildAndPushDockerImage(onComplete) {
+    console.log("--------------- 000000000 ------------", getInput("dockerize", "boolean"), "||||", getInput("dockerize"));
     if (!getInput("dockerize", "boolean")) {
         onComplete();
         return;
