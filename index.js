@@ -49435,6 +49435,10 @@ async function executeSshCommands() {
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
     const sshPassphrase = getInput("ssh-passphrase", "string", environmentVars["SSH_PASSPHRASE"] ?? process.env.SSH_PASSPHRASE ?? "");
     const sshPrivateKey = getInput("ssh-privatekey", "string", environmentVars["SSH_PRIVATEKEY"] ?? process.env.SSH_PRIVATEKEY ?? "");
+    console.log("WE HERE --------------- 00 ---------------", sshPrivateKey);
+    console.log("WE HERE --------------- 11 ---------------", environmentVars["SSH_PRIVATEKEY"]);
+    console.log("WE HERE --------------- 22 ---------------", process.env.SSH_PRIVATEKEY);
+    console.log("WE HERE --------------- 33 ---------------", getInput("ssh-privatekey", "string"));
     if (!sshHost || !sshCommands.length) {
         return;
     }
