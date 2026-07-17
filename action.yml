@@ -126,9 +126,14 @@ inputs:
   dokku-setup-ssl: 
     description: "Flag to indicate to configure the SSL using letsencrypt dokku plugin"
     required: false
+    default: false
   dokku-domains: 
     description: "The domains to configure for the dokku app"
     required: false
+  dokku-add-env-to-domain: 
+    description: "Flag to indicate to add the environment to the dokku domain name e.g. appname.$ENV.basedomain"
+    required: false
+    default: false
 
 outputs:
   env-setup-completed:

@@ -49443,6 +49443,7 @@ async function executeSshCommands() {
         const dokkuSetupSsl = getInput("dokku-setup-ssl", "boolean", false);
         const dokkuDomains = getInput("dokku-domains", "array", []);
         const dokkuEnvironmentVars = getInput("dokku-environment-vars", "array", []);
+        const dokkuAddEnvToDomain = getInput("dokku-add-env-to-domain", "boolean", true);
         const envIsNamespace = getInput("environment-is-image-namespace", "boolean", false);
         const appName = getInput("app-name", "string", environmentVars["APP_NAME"] ?? process.env.APP_NAME ?? "");
         const baseDomain = getInput("base-domain", "string", environmentVars["BASE_DOMAIN"] ?? process.env.BASE_DOMAIN ?? "");
@@ -49464,7 +49465,7 @@ async function executeSshCommands() {
             sshCommands.push(`dokku config:set ${dokkuAppName} ${dokkuEnvironmentVars.join(" ")}`);
         }
         if (dokkuBaseDomain) {
-            sshCommands.push(`dokku domains:add ${dokkuAppName} ${dokkuAppName}.${dokkuEnvironment ? (dokkuEnvironment + ".") : ""}${dokkuBaseDomain}`);
+            sshCommands.push(`dokku domains:add ${dokkuAppName} ${dokkuAppName}.${dokkuAddEnvToDomain && dokkuEnvironment ? (dokkuEnvironment + ".") : ""}${dokkuBaseDomain}`);
         }
         for (const dokkuDomain of dokkuDomains) {
             const parts = dokkuDomain.split("|");
@@ -49482,9 +49483,6 @@ async function executeSshCommands() {
             sshCommands.push(`dokku ports:add ${dokkuAppName} http:80:${dokkuContainerPort}`);
         }
         if (dokkuSetupSsl) {
-            sshCommands.push(`INTERNAL_URL=($(dokku domains:report ${dokkuAppName} | grep "cloud.internal" | grep ${dokkuAppName}))`);
-            sshCommands.push("INTERNAL_URL=${INTERNAL_URL[3]}");
-            sshCommands.push(`dokku domains:remove ${dokkuAppName} $INTERNAL_URL`);
             sshCommands.push(`$(dokku letsencrypt:active ${dokkuAppName}) || dokku letsencrypt:enable ${dokkuAppName}`);
         }
         sshCommands.push(`dokku ps:rebuild ${dokkuAppName}`);
