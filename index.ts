@@ -300,9 +300,7 @@ async function executeSshCommands() {
                 print("error", `${data}`);
             });
         });
-    }).connect({
-        password: sshPassword
-    });
+    }).connect(connPayload);
 }
 
 function executeInstruction(value: string, instruction: string) {
