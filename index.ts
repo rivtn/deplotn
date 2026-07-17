@@ -276,6 +276,7 @@ async function executeSshCommands() {
     if (sshPrivateKey) {
         connPayload.privateKey = sshPrivateKey;
     }
+    console.log("WE HER ------", connPayload);
     conn.on('ready', () => {
         conn.shell((err, stream) => {
             if (err) throw err;
