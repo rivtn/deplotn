@@ -87,9 +87,6 @@ inputs:
   ssh-passphrase: 
     description: "The SSH server passphrase"
     required: false
-  ssh-passphrase: 
-    description: "The SSH server passphrase"
-    required: false
   ssh-privatekey: 
     description: "The SSH server privatekey"
     required: false
