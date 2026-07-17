@@ -62,6 +62,15 @@ inputs:
     required: false
     default: |
         DOKKU_CONFIGS
+  docker-image-tag: 
+    description: "Docker image tag"
+    required: false
+  docker-image-namespace: 
+    description: "Docker image name space"
+    required: false
+  environment-is-image-namespace: 
+    description: "Flag to indicate if the environment value is the same as the docker image name space"
+    required: false
   # ssh setup
   ssh-host: 
     description: "The SSH server host"
@@ -74,6 +83,15 @@ inputs:
     required: false
   ssh-password: 
     description: "The SSH server password"
+    required: false
+  ssh-passphrase: 
+    description: "The SSH server passphrase"
+    required: false
+  ssh-passphrase: 
+    description: "The SSH server passphrase"
+    required: false
+  ssh-privatekey: 
+    description: "The SSH server privatekey"
     required: false
   ssh-commands: 
     description: "Commands to execute in the ssh shell"

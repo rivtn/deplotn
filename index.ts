@@ -93,13 +93,19 @@ async function prepareEnvironmentVars() {
 }
 
 async function buildAndPushDockerImage(onComplete: () => void) {
-    if (!getInput("dockerize", "boolean")) return;
+    if (!getInput("dockerize", "boolean")) {
+        onComplete();
+        return;
+    }
     const environment = getInput("environment", "string", "main");
     const dockerfile = getInput("dockerfile", "string", "Dockerfile");
+    const dockerImageTag = getInput("docker-image-tag", "string", "");
     const appName = getInput("app-name", "string", process.env.APP_NAME ?? "");
+    const dockerImageNamespace = getInput("docker-image-namespace", "string", "");
     const dockerProjectEnvPath = getInput("docker-project-env-path", "string", "");
     const environmentCasing = (getInput("environment-casing") ?? "").toUpperCase();
     const environmentVarsRaw = getInput("docker-write-env-vars", "array") as string[];
+    const envIsNamespace = getInput("environment-is-image-namespace", "boolean", false);
     const environmentVarsReadPrefixRaw = getInput("environment-vars-read-prefix") ?? "";
     const dockerRegistryHost = getInput("docker-registry-host", "string", process.env.REGISTRY_HOST ?? "");
     const dockerRegistryUsername = getInput("docker-registry-username", "string", process.env.REGISTRY_USERNAME ?? "");
@@ -144,10 +150,12 @@ async function buildAndPushDockerImage(onComplete: () => void) {
         print("log", `Docker:Shell:: closed with code - ${code}`);
         core.setFailed(`${code}`);
     });
+    const imageTag = dockerImageTag ? ("/" + dockerImageTag) : "";
+    const imageNamespace = dockerImageNamespace ? (dockerImageNamespace + "/") : (envIsNamespace && environment ? (environment + "/") : "");
     dockerShellProcess.stdin.write(`echo '${dockerRegistryPassword}' | docker login -u ${dockerRegistryUsername} --password-stdin ${dockerRegistryHost};`);
     dockerShellProcess.stdin.write(`docker buildx build -f ${dockerfile} --platform=linux/amd64 -t ${appName} .;`);
-    dockerShellProcess.stdin.write(`docker tag ${appName} ${dockerRegistryHost}/${environment}/${appName};`);
-    dockerShellProcess.stdin.write(`docker push ${dockerRegistryHost}/${environment}/${appName};`);
+    dockerShellProcess.stdin.write(`docker tag ${appName} ${dockerRegistryHost}/${imageNamespace}${appName}${imageTag};`);
+    dockerShellProcess.stdin.write(`docker push ${dockerRegistryHost}/${imageNamespace}${appName}${imageTag};`);
     dockerShellProcess.stdin.end();
 }
 
@@ -192,6 +200,8 @@ async function executeSshCommands() {
     const sshCommands = environmentVarsSshCommands.concat(getInput("ssh-commands", "array", []) as string[]);
     const sshUsername = getInput("ssh-username", "string", environmentVars["SSH_USERNAME"] ?? process.env.SSH_USERNAME ?? "");
     const sshPassword = getInput("ssh-password", "string", environmentVars["SSH_PASSWORD"] ?? process.env.SSH_PASSWORD ?? "");
+    const sshPassphrase = getInput("ssh-passphrase", "string", environmentVars["SSH_PASSPHRASE"] ?? process.env.SSH_PASSPHRASE ?? "");
+    const sshPrivateKey = getInput("ssh-privatekey", "string", environmentVars["SSH_PRIVATEKEY"] ?? process.env.SSH_PRIVATEKEY ?? "");
 
     if (!sshHost || !sshCommands.length) {
         return;
@@ -202,15 +212,18 @@ async function executeSshCommands() {
         const dokkuSetupSsl = getInput("dokku-setup-ssl", "boolean", false);
         const dokkuDomains = (getInput("dokku-domains", "array", []) as string[]);
         const dokkuEnvironmentVars = getInput("dokku-environment-vars", "array", []);
+        const envIsNamespace = getInput("environment-is-image-namespace", "boolean", false);
         const appName = getInput("app-name", "string", environmentVars["APP_NAME"] ?? process.env.APP_NAME ?? "");
         const baseDomain = getInput("base-domain", "string", environmentVars["BASE_DOMAIN"] ?? process.env.BASE_DOMAIN ?? "");
         const environment = getInput("environment", "string", environmentVars["ENVIRONMENT"] ?? process.env.ENVIRONMENT ?? "");
         const registryHost = getInput("registry-host", "string", environmentVars["REGISTRY_HOST"] ?? process.env.REGISTRY_HOST ?? "");
         const containerPort = getInput("container-port", "string", environmentVars["CONTAINER_PORT"] ?? process.env.CONTAINER_PORT ?? "");
         const dokkuAppName = getInput("dokku-app-name", "string", environmentVars["DOKKU_APP_NAME"] ?? process.env.DOKKU_APP_NAME ?? appName);
+        const dockerImageTag = getInput("docker-image-tag", "string", environmentVars["DOCKER_IMAGE_TAG"] ?? process.env.DOCKER_IMAGE_TAG ?? "");
         const dokkuBaseDomain = getInput("dokku-base-domain", "string", environmentVars["DOKKU_BASE_DOMAIN"] ?? process.env.DOKKU_BASE_DOMAIN ?? baseDomain);
         const dokkuEnvironment = getInput("dokku-environment", "string", environmentVars["DOKKU_ENVIRONMENT"] ?? process.env.DOKKU_ENVIRONMENT ?? environment);
         const dokkuRegistryHost = getInput("dokku-registry-host", "string", environmentVars["DOKKU_REGISTRY_HOST"] ?? process.env.DOKKU_REGISTRY_HOST ?? registryHost);
+        const dockerImageNamespace = getInput("docker-image-namespace", "string", environmentVars["DOCKER_IMAGE_NAMESPACE"] ?? process.env.DOCKER_IMAGE_NAMESPACE ?? "");
         const dokkuContainerPort = getInput("dokku-container-port", "string", environmentVars["DOKKU_CONTAINER_PORT"] ?? process.env.DOKKU_CONTAINER_PORT ?? containerPort);
         sshCommands.push(`dokku apps:create ${dokkuAppName}`);
         if ("DOKKU_CONFIGS" in environmentVars) {
@@ -230,7 +243,9 @@ async function executeSshCommands() {
             }
             sshCommands.push(`dokku domains:add ${dokkuAppName} ${domain}`);
         }
-        sshCommands.push(`dokku git:from-image ${dokkuAppName} ${dokkuRegistryHost}/${dokkuEnvironment ? (dokkuEnvironment + "/") : ""}${dokkuAppName}`);
+        const imageTag = dockerImageTag ? ("/" + dockerImageTag) : "";
+        const imageNamespace = dockerImageNamespace ? (dockerImageNamespace + "/") : (envIsNamespace && dokkuEnvironment ? (dokkuEnvironment + "/") : "");
+        sshCommands.push(`dokku git:from-image ${dokkuAppName} ${dokkuRegistryHost}/${imageNamespace}${dokkuAppName}${imageTag}`);
         if (dokkuContainerPort) {
             sshCommands.push(`dokku ports:add ${dokkuAppName} http:80:${dokkuContainerPort}`);
         }
@@ -247,6 +262,20 @@ async function executeSshCommands() {
     const conn = new Client();
     console.log("SSH Commands:", sshCommands);
     const sshCommandsQueue = new MicroQueue(sshCommands ?? []);
+    const connPayload: any = {
+        host: sshHost,
+        port: sshPort,
+        username: sshUsername,
+    }
+    if (sshPassword) {
+        connPayload.password = sshPassword;
+    }
+    if (sshPassphrase) {
+        connPayload.passphrase = sshPassphrase;
+    }
+    if (sshPrivateKey) {
+        connPayload.privateKey = sshPrivateKey;
+    }
     conn.on('ready', () => {
         conn.shell((err, stream) => {
             if (err) throw err;
@@ -272,9 +301,6 @@ async function executeSshCommands() {
             });
         });
     }).connect({
-        host: sshHost,
-        port: sshPort,
-        username: sshUsername,
         password: sshPassword
     });
 }
