@@ -49439,6 +49439,7 @@ async function executeSshCommands() {
     console.log("WE HERE --------------- 11 ---------------", environmentVars["SSH_PRIVATEKEY"]);
     console.log("WE HERE --------------- 22 ---------------", process.env.SSH_PRIVATEKEY);
     console.log("WE HERE --------------- 33 ---------------", getInput("ssh-privatekey", "string"));
+    console.log("WE HERE --------------- 44 ---------------", environmentVars);
     if (!sshHost || !sshCommands.length) {
         return;
     }
