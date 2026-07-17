@@ -49327,7 +49327,6 @@ async function prepareEnvironmentVars() {
     core.setOutput("env-setup-completed", true);
 }
 async function buildAndPushDockerImage(onComplete) {
-    console.log("--------------- 000000000 ------------", typeof getInput("dockerize", "boolean"), "||||", getInput("dockerize"));
     if (!getInput("dockerize", "boolean")) {
         onComplete();
         return;
@@ -49384,7 +49383,7 @@ async function buildAndPushDockerImage(onComplete) {
         print("log", `Docker:Shell:: closed with code - ${code}`);
         core.setFailed(`${code}`);
     });
-    const imageTag = dockerImageTag ? ("/" + dockerImageTag) : "";
+    const imageTag = dockerImageTag ? (":" + dockerImageTag) : "";
     const imageNamespace = dockerImageNamespace ? (dockerImageNamespace + "/") : (envIsNamespace && environment ? (environment + "/") : "");
     dockerShellProcess.stdin.write(`echo '${dockerRegistryPassword}' | docker login -u ${dockerRegistryUsername} --password-stdin ${dockerRegistryHost};`);
     dockerShellProcess.stdin.write(`docker buildx build -f ${dockerfile} --platform=linux/amd64 -t ${appName} .;`);
@@ -49477,7 +49476,7 @@ async function executeSshCommands() {
             }
             sshCommands.push(`dokku domains:add ${dokkuAppName} ${domain}`);
         }
-        const imageTag = dockerImageTag ? ("/" + dockerImageTag) : "";
+        const imageTag = dockerImageTag ? (":" + dockerImageTag) : "";
         const imageNamespace = dockerImageNamespace ? (dockerImageNamespace + "/") : (envIsNamespace && dokkuEnvironment ? (dokkuEnvironment + "/") : "");
         sshCommands.push(`dokku git:from-image ${dokkuAppName} ${dokkuRegistryHost}/${imageNamespace}${dokkuAppName}${imageTag}`);
         if (dokkuContainerPort) {
