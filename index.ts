@@ -246,7 +246,7 @@ async function executeSshCommands() {
         }
         const imageTag = dockerImageTag ? (":" + dockerImageTag) : "";
         const imageNamespace = dockerImageNamespace ? (dockerImageNamespace + "/") : (envIsNamespace && dokkuEnvironment ? (dokkuEnvironment + "/") : "");
-        sshCommands.push(`dokku git:from-image ${dokkuAppName} ${dokkuRegistryHost}/${imageNamespace}${dokkuAppName}${imageTag}`);
+        sshCommands.push(`dokku git:from-image ${dokkuAppName} ${dokkuRegistryHost}/${imageNamespace}${dokkuAppName}${imageTag} --force`);
         if (dokkuContainerPort) {
             sshCommands.push(`dokku ports:add ${dokkuAppName} http:80:${dokkuContainerPort}`);
         }
